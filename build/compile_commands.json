@@ -7,6 +7,18 @@
 },
 {
   "directory": "C:/Users/medch/OneDrive/Bureau/tutos/-/build",
+  "command": "C:\\mingw64\\bin\\g++.exe -DSFML_STATIC -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/include -g -std=c++17 -o CMakeFiles\\sfml_blob.dir\\Systems.cpp.obj -c C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\Systems.cpp",
+  "file": "C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\Systems.cpp",
+  "output": "CMakeFiles\\sfml_blob.dir\\Systems.cpp.obj"
+},
+{
+  "directory": "C:/Users/medch/OneDrive/Bureau/tutos/-/build",
+  "command": "C:\\mingw64\\bin\\g++.exe -DSFML_STATIC -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/include -g -std=c++17 -o CMakeFiles\\sfml_blob.dir\\Components.cpp.obj -c C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\Components.cpp",
+  "file": "C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\Components.cpp",
+  "output": "CMakeFiles\\sfml_blob.dir\\Components.cpp.obj"
+},
+{
+  "directory": "C:/Users/medch/OneDrive/Bureau/tutos/-/build",
   "command": "C:\\mingw64\\bin\\g++.exe -DSFML_STATIC -D_CRT_SECURE_NO_WARNINGS -D_WINSOCK_DEPRECATED_NO_WARNINGS -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/include -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/src -g -std=c++17 -fvisibility=hidden -fno-keep-inline-dllexport -Wall -Wextra -Wshadow -Wnon-virtual-dtor -Wcast-align -Wunused -Woverloaded-virtual -Wconversion -Wsign-conversion -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough -Wsuggest-override -Wnull-dereference -Wold-style-cast -Wpedantic -Wmisleading-indentation -Wduplicated-cond -Wlogical-op -Wduplicated-branches -o dep\\sfml\\src\\SFML\\System\\CMakeFiles\\sfml-system.dir\\Clock.cpp.obj -c C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\dep\\sfml\\src\\SFML\\System\\Clock.cpp",
   "file": "C:\\Users\\medch\\OneDrive\\Bureau\\tutos\\-\\dep\\sfml\\src\\SFML\\System\\Clock.cpp",
   "output": "dep\\sfml\\src\\SFML\\System\\CMakeFiles\\sfml-system.dir\\Clock.cpp.obj"

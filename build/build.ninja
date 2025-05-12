@@ -57,6 +57,22 @@ build CMakeFiles/sfml_blob.dir/main.cpp.obj: CXX_COMPILER__sfml_blob_unscanned_D
   OBJECT_DIR = CMakeFiles\sfml_blob.dir
   OBJECT_FILE_DIR = CMakeFiles\sfml_blob.dir
 
+build CMakeFiles/sfml_blob.dir/Systems.cpp.obj: CXX_COMPILER__sfml_blob_unscanned_Debug C$:/Users/medch/OneDrive/Bureau/tutos/-/Systems.cpp || cmake_object_order_depends_target_sfml_blob
+  DEFINES = -DSFML_STATIC
+  DEP_FILE = CMakeFiles\sfml_blob.dir\Systems.cpp.obj.d
+  FLAGS = -g -std=c++17
+  INCLUDES = -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/include
+  OBJECT_DIR = CMakeFiles\sfml_blob.dir
+  OBJECT_FILE_DIR = CMakeFiles\sfml_blob.dir
+
+build CMakeFiles/sfml_blob.dir/Components.cpp.obj: CXX_COMPILER__sfml_blob_unscanned_Debug C$:/Users/medch/OneDrive/Bureau/tutos/-/Components.cpp || cmake_object_order_depends_target_sfml_blob
+  DEFINES = -DSFML_STATIC
+  DEP_FILE = CMakeFiles\sfml_blob.dir\Components.cpp.obj.d
+  FLAGS = -g -std=c++17
+  INCLUDES = -IC:/Users/medch/OneDrive/Bureau/tutos/-/dep/sfml/include
+  OBJECT_DIR = CMakeFiles\sfml_blob.dir
+  OBJECT_FILE_DIR = CMakeFiles\sfml_blob.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target sfml_blob
@@ -65,7 +81,7 @@ build CMakeFiles/sfml_blob.dir/main.cpp.obj: CXX_COMPILER__sfml_blob_unscanned_D
 #############################################
 # Link the executable sfml_blob.exe
 
-build sfml_blob.exe: CXX_EXECUTABLE_LINKER__sfml_blob_Debug CMakeFiles/sfml_blob.dir/main.cpp.obj | dep/sfml/lib/libsfml-graphics-s-d.a dep/sfml/lib/libsfml-window-s-d.a dep/sfml/lib/libsfml-system-s-d.a dep/sfml/lib/libfreetyped.a || dep/sfml/lib/libfreetyped.a dep/sfml/lib/libsfml-graphics-s-d.a dep/sfml/lib/libsfml-system-s-d.a dep/sfml/lib/libsfml-window-s-d.a
+build sfml_blob.exe: CXX_EXECUTABLE_LINKER__sfml_blob_Debug CMakeFiles/sfml_blob.dir/main.cpp.obj CMakeFiles/sfml_blob.dir/Systems.cpp.obj CMakeFiles/sfml_blob.dir/Components.cpp.obj | dep/sfml/lib/libsfml-graphics-s-d.a dep/sfml/lib/libsfml-window-s-d.a dep/sfml/lib/libsfml-system-s-d.a dep/sfml/lib/libfreetyped.a || dep/sfml/lib/libfreetyped.a dep/sfml/lib/libsfml-graphics-s-d.a dep/sfml/lib/libsfml-system-s-d.a dep/sfml/lib/libsfml-window-s-d.a
   FLAGS = -g
   LINK_LIBRARIES = dep/sfml/lib/libsfml-graphics-s-d.a  dep/sfml/lib/libsfml-window-s-d.a  dep/sfml/lib/libsfml-system-s-d.a  -lopengl32  -lwinmm  -lgdi32  dep/sfml/lib/libfreetyped.a  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\sfml_blob.dir
