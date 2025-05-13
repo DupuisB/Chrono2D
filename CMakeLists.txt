@@ -31,7 +31,7 @@ add_subdirectory(dep/sfml EXCLUDE_FROM_ALL)
 
 # --- Define Your Game Executable ---
 # List your source files here
-add_executable(sfml_blob main.cpp Systems.cpp Components.cpp)
+add_executable(sfml_blob main.cpp)
 
 # --- Link Your Executable Against SFML Libraries ---
 # CMake knows about the 'sfml-graphics', 'sfml-window', and 'sfml-system' targets
