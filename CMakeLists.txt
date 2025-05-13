@@ -25,7 +25,12 @@ add_subdirectory(dep/box2d)
 
 
 # --- Define Your Game Executable ---
-add_executable(sfml_blob main.cpp)
+# Add src/game_object.cpp to the list of sources
+add_executable(sfml_blob main.cpp src/game_object.cpp)
+
+# --- Add Include Directory ---
+# This tells CMake where to find your new header files (constants.hpp, utils.hpp, game_object.hpp)
+target_include_directories(sfml_blob PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # --- Link Your Executable Against SFML and Box2D Libraries ---
 # Link against SFML modules AND the Box2D target built by add_subdirectory

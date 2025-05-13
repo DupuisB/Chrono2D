@@ -1,96 +1,17 @@
 #include <SFML/Graphics.hpp>
-#include <box2d/box2d.h> // Main header, includes necessary definitions like B2_ID_EQUALS
+#include <box2d/box2d.h>
+
+#include "include/game_object.hpp" // Includes utils.hpp and constants.hpp
 
 #include <vector>
-#include <cmath>
+#include <cmath> // For M_PI / b2_pi
 #include <iostream>
 #include <optional>
 #include <numeric>
 #include <iomanip>
 
-// --- Constants ---
-const unsigned int WINDOW_WIDTH = 800;
-const unsigned int WINDOW_HEIGHT = 600;
-const float PIXELS_PER_METER = 32.0f;
-
-// --- Conversion Functions ---
-// ... (Keep conversion functions) ...
-float pixelsToMeters(float pixels) {
-    return pixels / PIXELS_PER_METER;
-}
-
-float metersToPixels(float meters) {
-    return meters * PIXELS_PER_METER;
-}
-
-sf::Vector2f b2VecToSfVec(b2Vec2 vec, bool scale = true, bool flipY = true) {
-    float sfX = scale ? metersToPixels(vec.x) : vec.x;
-    float sfY = scale ? metersToPixels(vec.y) : vec.y;
-    if (flipY) {
-        return sf::Vector2f(sfX, WINDOW_HEIGHT - sfY);
-    } else {
-         return sf::Vector2f(sfX, sfY);
-    }
-}
-
-b2Vec2 sfVecToB2Vec(sf::Vector2f vec, bool scale = true, bool flipY = true) {
-    float b2X = scale ? pixelsToMeters(vec.x) : vec.x;
-    float b2Y = flipY ? WINDOW_HEIGHT - vec.y : vec.y;
-    b2Y = scale ? pixelsToMeters(b2Y) : b2Y;
-    return {b2X, b2Y};
-}
-
-// --- Helper Function to Create Box Bodies ---
-// ... (Keep GameObject struct) ...
-struct GameObject {
-    b2BodyId bodyId = b2_nullBodyId;
-    b2ShapeId shapeId = b2_nullShapeId;
-    sf::RectangleShape sfShape;
-    bool hasVisual = true;
-};
-
-// ... (Keep createAnchorBody) ...
-b2BodyId createAnchorBody(b2WorldId worldId, float x, float y) {
-     b2BodyDef bodyDef = b2DefaultBodyDef();
-     bodyDef.type = b2_staticBody;
-     bodyDef.position = {x, y};
-     b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
-     if (B2_IS_NULL(bodyId)) { std::cerr << "Error creating anchor body!" << std::endl; }
-     return bodyId;
-}
-
-// ... (Keep createBox) ...
-GameObject createBox(b2WorldId worldId, float x, float y, float width, float height, bool isDynamic, sf::Color color) {
-     GameObject obj;
-    obj.sfShape.setSize({metersToPixels(width), metersToPixels(height)});
-    obj.sfShape.setFillColor(color);
-    obj.sfShape.setOrigin({metersToPixels(width) / 2.0f, metersToPixels(height) / 2.0f});
-    obj.sfShape.setPosition(b2VecToSfVec({x, y}));
-
-    b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.type = isDynamic ? b2_dynamicBody : b2_staticBody;
-    bodyDef.position = {x, y};
-    if (isDynamic) {
-         bodyDef.fixedRotation = true;
-         bodyDef.linearDamping = 0.1f;
-    }
-    obj.bodyId = b2CreateBody(worldId, &bodyDef);
-    if (B2_IS_NULL(obj.bodyId)) { std::cerr << "Error creating body!" << std::endl; obj.hasVisual = false; return obj; }
-
-    b2Polygon box = b2MakeBox(width / 2.0f, height / 2.0f);
-    b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.density = isDynamic ? 1.0f : 0.0f;
-    shapeDef.material.friction = 0.7f;
-    shapeDef.material.restitution = 0.1f;
-
-    obj.shapeId = b2CreatePolygonShape(obj.bodyId, &shapeDef, &box);
-     if (B2_IS_NULL(obj.shapeId)) { std::cerr << "Error creating shape!" << std::endl; b2DestroyBody(obj.bodyId); obj.bodyId = b2_nullBodyId; obj.hasVisual = false; return obj; }
-    return obj;
-}
-
 // --- Main Function ---
 int main() {
-    // ... (Setup is the same) ...
     sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "SFML Box2D Platformer");
     window.setFramerateLimit(60);
 
@@ -104,73 +25,202 @@ int main() {
     std::vector<b2BodyId> groundPlatformIds;
 
     // Ground
-    // ... (Ground creation) ...
     float groundWidthM = pixelsToMeters(WINDOW_WIDTH);
     float groundHeightM = pixelsToMeters(50);
     float groundXM = groundWidthM / 2.0f;
     float groundYM = groundHeightM / 2.0f;
-    gameObjects.push_back(createBox(worldId, groundXM, groundYM, groundWidthM, groundHeightM, false, sf::Color::Green));
-    groundPlatformIds.push_back(gameObjects.back().bodyId);
-
+    GameObject ground;
+    if (ground.init(worldId, groundXM, groundYM, groundWidthM, groundHeightM, false, sf::Color::Green)) {
+        gameObjects.push_back(ground);
+        groundPlatformIds.push_back(ground.bodyId);
+    }
 
     // Player
-    // ... (Player creation) ...
     float playerWidthM = pixelsToMeters(30);
     float playerHeightM = pixelsToMeters(50);
     float playerXM = pixelsToMeters(100);
-    float playerYM = pixelsToMeters(300);
-    gameObjects.push_back(createBox(worldId, playerXM, playerYM, playerWidthM, playerHeightM, true, sf::Color::Blue));
-    b2BodyId playerBodyId = gameObjects.back().bodyId;
-
+    float playerYM = pixelsToMeters(300); // Adjusted for typical platformer start
+    GameObject playerObject;
+    b2BodyId playerBodyId = b2_nullBodyId; // Initialize to null
+    // For player: fixedRotation = true, linearDamping = 0.1f
+    if (playerObject.init(worldId, playerXM, playerYM, playerWidthM, playerHeightM, true, sf::Color::Blue, true, 0.1f)) {
+        gameObjects.push_back(playerObject);
+        playerBodyId = playerObject.bodyId; // Assign here after successful init
+    }
 
     // Pushable Box
-    // ... (Box creation) ...
     float boxSizeM = pixelsToMeters(40);
     float boxXM = pixelsToMeters(400);
-    float boxYM = groundYM + groundHeightM / 2.0f + boxSizeM / 2.0f + 0.1f;
-    gameObjects.push_back(createBox(worldId, boxXM, boxYM, boxSizeM, boxSizeM, true, sf::Color::Red));
-    groundPlatformIds.push_back(gameObjects.back().bodyId);
-
+    float boxYM = groundYM + groundHeightM / 2.0f + boxSizeM / 2.0f + pixelsToMeters(1); // Ensure it's slightly above ground
+    GameObject pushableBox;
+    // For pushable box: default fixedRotation=false, linearDamping=0.0f (can be adjusted if needed)
+    // Let's give it some linear damping too
+    if (pushableBox.init(worldId, boxXM, boxYM, boxSizeM, boxSizeM, true, sf::Color::Red, false, 0.2f)) {
+        gameObjects.push_back(pushableBox);
+        groundPlatformIds.push_back(pushableBox.bodyId);
+    }
 
     // --- Hanging Platform ---
-    // ... (Platform and joint creation) ...
-     float anchorX = pixelsToMeters(WINDOW_WIDTH * 0.7f);
-    float anchorY = pixelsToMeters(WINDOW_HEIGHT * 0.8f);
-    b2BodyId anchorBodyId = createAnchorBody(worldId, anchorX, anchorY);
+    float anchorX_m = pixelsToMeters(WINDOW_WIDTH * 0.7f);
+    float anchorY_m = pixelsToMeters(WINDOW_HEIGHT * 0.8f);
+    b2BodyId anchorBodyId = createAnchorBody(worldId, anchorX_m, anchorY_m);
 
     float platWidthM = pixelsToMeters(120);
     float platHeightM = pixelsToMeters(20);
-    float platX = anchorX;
-    float platY = anchorY - pixelsToMeters(150);
-    gameObjects.push_back(createBox(worldId, platX, platY, platWidthM, platHeightM, true, sf::Color(160, 82, 45)));
-    b2BodyId platformBodyId = gameObjects.back().bodyId;
-    groundPlatformIds.push_back(platformBodyId);
+    float platX_m = anchorX_m;
+    float platY_m = anchorY_m - pixelsToMeters(150);
+    GameObject hangingPlatform;
+    // For hanging platform: dynamic, but might want fixedRotation or specific damping
+    if (hangingPlatform.init(worldId, platX_m, platY_m, platWidthM, platHeightM, true, sf::Color(160, 82, 45), false, 0.5f)) {
+        gameObjects.push_back(hangingPlatform);
+        groundPlatformIds.push_back(hangingPlatform.bodyId);
+    }
+    b2BodyId platformBodyId = gameObjects.back().bodyId; // Assuming platform is last added
+    // Show default mass data
+    std::cout << "Default mass data: " << b2Body_GetMass(platformBodyId) << std::endl;
+    std::cout << "Default inertia: " << b2Body_GetRotationalInertia(platformBodyId) << std::endl;
 
-    b2JointId distanceJointId = b2_nullJointId;
-    b2DistanceJointDef distanceDef;
+    b2MassData myMassData;
+    myMassData.mass = 2.34375f;
+    myMassData.center = (b2Vec2){0.0f, 0.0f};
+    myMassData.rotationalInertia = 5.0f;
+    b2Body_SetMassData(platformBodyId, myMassData);
+
+    // --- Create Segmented Rope ---
+    const int numRopeSegments = 10;
+    std::vector<b2BodyId> ropeSegmentBodyIds;
+    ropeSegmentBodyIds.reserve(numRopeSegments);
 
     if (!B2_IS_NULL(anchorBodyId) && !B2_IS_NULL(platformBodyId)) {
-        distanceDef = b2DefaultDistanceJointDef();
-        distanceDef.bodyIdA = anchorBodyId;
-        distanceDef.bodyIdB = platformBodyId;
-        distanceDef.localAnchorA = {0.0f, 0.0f};
-        distanceDef.localAnchorB = {0.0f, platHeightM / 2.0f};
+        b2Vec2 anchorPos = b2Body_GetPosition(anchorBodyId); // World position of the static anchor
+        b2Vec2 platformAttachPointLocal = {0.0f, platHeightM / 2.0f};
+        b2Vec2 platformAttachPointWorld = b2Body_GetWorldPoint(platformBodyId, platformAttachPointLocal);
 
-        b2Vec2 worldAnchorA = b2Body_GetWorldPoint(anchorBodyId, distanceDef.localAnchorA);
-        b2Vec2 worldAnchorB = b2Body_GetWorldPoint(platformBodyId, distanceDef.localAnchorB);
-        distanceDef.length = b2Distance(worldAnchorA, worldAnchorB);
-        distanceDef.minLength = distanceDef.length;
-        distanceDef.maxLength = distanceDef.length;
+        float desiredTotalRopeLength = b2Distance(anchorPos, platformAttachPointWorld);
+        float ropeSegmentLengthM = desiredTotalRopeLength / numRopeSegments;
+        float segmentThicknessM = pixelsToMeters(8); // Thickness of each rope segment
 
-        distanceJointId = b2CreateDistanceJoint(worldId, &distanceDef);
-        if(B2_IS_NULL(distanceJointId)) { std::cerr << "Failed to create distance joint!" << std::endl; }
+        b2BodyId prevBodyId = anchorBodyId;
+        b2Vec2 prevBodyAnchorLocal = {0.0f, 0.0f}; // Anchor point on the static anchor body
+
+        for (int i = 0; i < numRopeSegments; ++i) {
+            GameObject segmentObj;
+            // Calculate initial position for the segment (hanging straight down)
+            float segmentCenterX = anchorPos.x;
+            float segmentCenterY = anchorPos.y - (i * ropeSegmentLengthM) - (ropeSegmentLengthM / 2.0f);
+
+            // Create the rope segment GameObject
+            // Properties: light, flexible, some damping
+            if (segmentObj.init(worldId, segmentCenterX, segmentCenterY,
+                                segmentThicknessM, ropeSegmentLengthM, // width (thickness), height (length)
+                                true, sf::Color(139, 69, 19),      // Dynamic, Brown color
+                                false, 0.2f, 0.05f, 0.5f, 0.1f)) { // fixedRotation=false, linearDamping, density, friction, restitution
+                gameObjects.push_back(segmentObj);
+                ropeSegmentBodyIds.push_back(segmentObj.bodyId);
+
+                // Define the revolute joint
+                b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+                revoluteDef.bodyIdA = prevBodyId;
+                revoluteDef.bodyIdB = segmentObj.bodyId;
+                revoluteDef.localAnchorA = prevBodyAnchorLocal;
+                revoluteDef.localAnchorB = {0.0f, ropeSegmentLengthM / 2.0f}; // Top of the current segment
+                revoluteDef.collideConnected = false;
+
+                b2CreateRevoluteJoint(worldId, &revoluteDef);
+
+                prevBodyId = segmentObj.bodyId;
+                prevBodyAnchorLocal = {0.0f, -ropeSegmentLengthM / 2.0f}; // Bottom of the current segment for the next joint
+            } else {
+                std::cerr << "Failed to create rope segment " << i << std::endl;
+                // Handle error, maybe break or skip this segment
+            }
+        }
+
+        // Connect the last rope segment to the platform
+        if (!ropeSegmentBodyIds.empty()) {
+            b2RevoluteJointDef revoluteDef = b2DefaultRevoluteJointDef();
+            revoluteDef.bodyIdA = ropeSegmentBodyIds.back(); // Last segment of the rope
+            revoluteDef.bodyIdB = platformBodyId;
+            revoluteDef.localAnchorA = {0.0f, -ropeSegmentLengthM / 2.0f}; // Bottom of the last rope segment
+            revoluteDef.localAnchorB = platformAttachPointLocal;          // Attachment point on the platform
+            revoluteDef.collideConnected = false;
+            b2CreateRevoluteJoint(worldId, &revoluteDef);
+        }
+    }
+    // --- End Segmented Rope Creation ---
+    
+    // Create a horizontal rope between two new anchors
+    const int numHSegments = 20;
+    b2Vec2 leftAnchorPos  = { pixelsToMeters(100), pixelsToMeters(200) };
+    b2Vec2 rightAnchorPos = { pixelsToMeters(800), pixelsToMeters(200) };
+
+    // Create two static anchor bodies
+    b2BodyId leftAnchor  = createAnchorBody(worldId, leftAnchorPos.x,  leftAnchorPos.y);
+    b2BodyId rightAnchor = createAnchorBody(worldId, rightAnchorPos.x, rightAnchorPos.y);
+
+    std::vector<b2BodyId> hRopeSegIds;
+    hRopeSegIds.reserve(numHSegments);
+
+    float totalLength   = b2Distance(leftAnchorPos, rightAnchorPos);
+    float segmentLength = totalLength / numHSegments;
+    float thickness     = pixelsToMeters(3);
+
+    b2BodyId prevBody    = leftAnchor;
+    b2Vec2   prevLocalA  = {0.0f, 0.0f};
+
+    for (int i = 0; i < numHSegments; ++i) {
+        // Interpolate segment center along the line
+        float t = (i + 0.5f) / numHSegments;
+        b2Vec2 center = {
+            leftAnchorPos.x + t * (rightAnchorPos.x - leftAnchorPos.x),
+            leftAnchorPos.y + t * (rightAnchorPos.y - leftAnchorPos.y)
+        };
+
+        GameObject segObj;
+        if (segObj.init(
+                worldId,
+                center.x, center.y,
+                segmentLength, thickness,
+                true,               // dynamic
+                sf::Color::Yellow,
+                false,              // fixedRotation
+                1.0f,               // linearDamping
+                1.0f,               // density
+                0.0f,               // friction
+                1.0f                // restitution
+            ))
+        {
+            gameObjects.push_back(segObj);
+            b2BodyId curBody = segObj.bodyId;
+            hRopeSegIds.push_back(curBody);
+
+            // Create revolute joint between prevBody and this segment
+            b2RevoluteJointDef jd = b2DefaultRevoluteJointDef();
+            jd.bodyIdA        = prevBody;
+            jd.bodyIdB        = curBody;
+            jd.localAnchorA   = prevLocalA;
+            jd.localAnchorB   = { -segmentLength * 0.5f, 0.0f };
+            jd.collideConnected = false;
+            b2CreateRevoluteJoint(worldId, &jd);
+
+            // Prepare for next iteration
+            prevBody   = curBody;
+            prevLocalA = { segmentLength * 0.5f, 0.0f };
+        }
     }
 
-
+    // Connect the last segment to the right anchor
+    if (!hRopeSegIds.empty()) {
+        b2RevoluteJointDef jd = b2DefaultRevoluteJointDef();
+        jd.bodyIdA        = hRopeSegIds.back();
+        jd.bodyIdB        = rightAnchor;
+        jd.localAnchorA   = { segmentLength * 0.5f, 0.0f };
+        jd.localAnchorB   = { 0.0f, 0.0f };
+        jd.collideConnected = false;
+        b2CreateRevoluteJoint(worldId, &jd);
+    }
     // --- Game Loop Variables ---
-    // ... (Variables are the same) ...
-     sf::Clock clock;
-    // float timeStep = 1.0f / 60.0f; // dt is now used for world step
+    sf::Clock clock;
     int32_t subSteps = 8;
 
     float moveForce = 50.0f;
@@ -190,96 +240,86 @@ int main() {
     const float jumpBufferThreshold = 0.1f;
     float jumpBufferTimer = 0.0f;
 
-
     // --- Game Loop ---
     while (window.isOpen()) {
         float dt = clock.restart().asSeconds();
-        dt = std::min(dt, 0.05f);
+        dt = std::min(dt, 0.05f); // Cap dt to prevent large steps
 
-        // --- SFML 3 Event Handling ---
+        // --- SFML Event Handling ---
         jumpKeyJustPressed = false;
         previousJumpKeyHeld = jumpKeyHeld;
 
         while (std::optional<sf::Event> event = window.pollEvent()) {
-             if (event) {
+            if (event) {
                 if (event->is<sf::Event::Closed>()) {
                     window.close();
                 }
-                 // Check specifically for Space key press/release events if needed for other logic
-                 if (event->is<sf::Event::KeyPressed>()) {
-                     auto keyEvent = event->getIf<sf::Event::KeyPressed>();
-                     // *** CHANGE: Check for Space key ***
-                     if(keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
-                         // Input state is handled by isKeyPressed below,
-                         // but you could add specific single-press logic here if needed.
-                     }
-                 } else if (event->is<sf::Event::KeyReleased>()) {
-                      auto keyEvent = event->getIf<sf::Event::KeyReleased>();
-                     // *** CHANGE: Check for Space key ***
-                     if(keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
-                         // Jump cut logic uses the isKeyPressed state below.
-                     }
-                 }
+                if (event->is<sf::Event::KeyPressed>()) {
+                    auto keyEvent = event->getIf<sf::Event::KeyPressed>();
+                    if(keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
+                    }
+                } else if (event->is<sf::Event::KeyReleased>()) {
+                    auto keyEvent = event->getIf<sf::Event::KeyReleased>();
+                    if(keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
+                    }
+                }
             }
         }
-        // -----------------------------
 
         // --- Input State Update ---
         bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
         bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
-        // *** CHANGE: Check Space key for jump ***
         jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 
-        // Detect "just pressed" state for Space key
         if (jumpKeyHeld && !previousJumpKeyHeld) {
             jumpKeyJustPressed = true;
         }
 
         // --- Ground Check ---
-        // ... (Ground check logic is the same) ...
-         wasGroundedLastFrame = isGrounded;
+        wasGroundedLastFrame = isGrounded;
         isGrounded = false;
-        b2ContactData contactData[10];
-        int count = b2Body_GetContactData(playerBodyId, contactData, 10);
-        for (int i = 0; i < count; ++i) {
-             if (contactData[i].manifold.pointCount > 0) {
-                 b2ShapeId shapeA = contactData[i].shapeIdA;
-                 b2ShapeId shapeB = contactData[i].shapeIdB;
-                 b2BodyId bodyA = b2Shape_GetBody(shapeA);
-                 b2BodyId bodyB = b2Shape_GetBody(shapeB);
-                 b2BodyId otherBodyId = b2_nullBodyId;
-                 float normalYDirection = 0.0f;
+        if (!B2_IS_NULL(playerBodyId)) { // Ensure player body is valid
+            b2ContactData contactData[10];
+            int count = b2Body_GetContactData(playerBodyId, contactData, 10);
+            for (int i = 0; i < count; ++i) {
+                if (contactData[i].manifold.pointCount > 0) {
+                    b2ShapeId shapeA = contactData[i].shapeIdA;
+                    b2ShapeId shapeB = contactData[i].shapeIdB;
+                    b2BodyId bodyA = b2Shape_GetBody(shapeA);
+                    b2BodyId bodyB = b2Shape_GetBody(shapeB);
+                    b2BodyId otherBodyId = b2_nullBodyId;
+                    float supportingNormalY = 0.0f; // Y-component of normal from other object towards player
 
-                 // Determine which body is the player and which is the other
-                 if (B2_ID_EQUALS(bodyA, playerBodyId)) {
-                     otherBodyId = bodyB;
-                     normalYDirection = contactData[i].manifold.normal.y; // Normal points from A(player) to B(other)
-                 } else if (B2_ID_EQUALS(bodyB, playerBodyId)) {
-                     otherBodyId = bodyA;
-                     normalYDirection = -contactData[i].manifold.normal.y; // Normal points from A(other) to B(player), flip for player perspective
-                 } else {
-                     continue; // Contact doesn't involve the player
-                 }
-
-                 // Check if the other body is a ground/platform
-                 bool isOtherGround = false;
-                 for(const auto& groundId : groundPlatformIds) {
-                    if (B2_ID_EQUALS(otherBodyId, groundId)) {
-                        isOtherGround = true;
-                        break;
+                    if (B2_ID_EQUALS(bodyA, playerBodyId)) {
+                        otherBodyId = bodyB;
+                        // Normal points from player (A) to other (B).
+                        // We want normal from other to player, so flip it.
+                        supportingNormalY = -contactData[i].manifold.normal.y;
+                    } else if (B2_ID_EQUALS(bodyB, playerBodyId)) {
+                        otherBodyId = bodyA;
+                        // Normal points from other (A) to player (B). This is what we need.
+                        supportingNormalY = contactData[i].manifold.normal.y;
+                    } else {
+                        continue; // Contact doesn't involve the player
                     }
-                 }
 
-                 // Check verticality of contact normal (relative to player being on top)
-                 if (isOtherGround && normalYDirection > 0.7f) {
-                     isGrounded = true;
-                     break; // Found ground contact
-                 }
+                    bool isOtherGround = false;
+                    for(const auto& groundId : groundPlatformIds) {
+                        if (B2_ID_EQUALS(otherBodyId, groundId)) {
+                            isOtherGround = true;
+                            break;
+                        }
+                    }
+
+                    // If the other body is ground and the normal from it to the player is mostly upward
+                    if (supportingNormalY > 0.7f) {
+                        isGrounded = true;
+                        break; // Found ground contact
+                    }
+                }
             }
         }
 
-        // --- Update Timers ---
-        // ... (Timer updates are the same) ...
         if (isGrounded) {
             coyoteTimer = coyoteTimeThreshold;
             isJumping = false; // Ensure jumping flag is reset when grounded
@@ -289,107 +329,64 @@ int main() {
         jumpBufferTimer = std::max(0.0f, jumpBufferTimer - dt);
         bool justLanded = isGrounded && !wasGroundedLastFrame;
 
-
         // --- Handle Jumping ---
         if (jumpKeyJustPressed) {
             jumpBufferTimer = jumpBufferThreshold;
         }
 
-        // bool canJump = isGrounded || (coyoteTimer > 0.0f);
-        bool canJump = true;
+        bool canJump = (isGrounded || coyoteTimer > 0.0f); // Corrected logic for when jump is allowed
         bool tryJumpFromBuffer = justLanded && (jumpBufferTimer > 0.0f);
 
-        // *** ADDED DEBUGGING ***
-         std::cout << std::fixed << std::setprecision(2)
-                   << "Grounded: " << isGrounded
-                   << " | Coyote T: " << coyoteTimer
-                   << " | Buffer T: " << jumpBufferTimer
-                   << " | JustPressed: " << jumpKeyJustPressed
-                   << " | CanJump: " << canJump
-                   << " | TryBuffer: " << tryJumpFromBuffer
-                   << " | isJumping: " << isJumping
-                   << std::endl;
-        // **********************
-
-        if (tryJumpFromBuffer || (jumpKeyJustPressed && canJump))
+        if (!B2_IS_NULL(playerBodyId) && (tryJumpFromBuffer || (jumpKeyJustPressed && canJump)))
         {
-            // *** ADDED DEBUGGING ***
-            // std::cout << "!!!!!! JUMPING !!!!!!" << std::endl;
-            // **********************
-
             b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
-            b2Body_SetLinearVelocity(playerBodyId, {currentVel.x, 0.0f});
+            b2Body_SetLinearVelocity(playerBodyId, {currentVel.x, 0.0f}); // Reset vertical velocity before jump
             b2Body_ApplyLinearImpulseToCenter(playerBodyId, {0.0f, jumpImpulseMagnitude}, true);
             isJumping = true;
-            jumpBufferTimer = 0.0f;
-            coyoteTimer = 0.0f;
-            isGrounded = false;
+            jumpBufferTimer = 0.0f; // Consume buffer
+            coyoteTimer = 0.0f;     // Consume coyote time
+            isGrounded = false;     // No longer grounded after initiating jump
         }
 
         // --- Jump Height Control ---
-        // ... (Jump cut logic is the same) ...
-         if (!jumpKeyHeld && isJumping) {
+        if (!B2_IS_NULL(playerBodyId) && !jumpKeyHeld && isJumping) {
             b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
-            if (currentVel.y > 0) {
+            if (currentVel.y > 0) { // Only cut jump if moving upwards
                 b2Body_SetLinearVelocity(playerBodyId, {currentVel.x, currentVel.y * jumpCutMultiplier});
-                isJumping = false;
             }
+            isJumping = false; // Stop jump phase even if velocity wasn't positive, to prevent re-application
         }
-
 
         // --- Horizontal Movement ---
-        // ... (Movement logic is the same) ...
-        b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
-        float forceX = 0.0f;
-        if (wantsToMoveLeft && currentVel.x > -maxHorizontalSpeed) {
-           forceX = -moveForce;
+        if (!B2_IS_NULL(playerBodyId)) {
+            b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
+            float forceX = 0.0f;
+            if (wantsToMoveLeft && currentVel.x > -maxHorizontalSpeed) {
+                forceX = -moveForce;
+            }
+            if (wantsToMoveRight && currentVel.x < maxHorizontalSpeed) {
+                forceX = moveForce;
+            }
+            // Apply force only if there's a desired movement and not exceeding max speed in that direction
+            if(forceX != 0.0f) {
+                b2Body_ApplyForceToCenter(playerBodyId, {forceX, 0.0f}, true);
+            }
         }
-        if (wantsToMoveRight && currentVel.x < maxHorizontalSpeed) {
-           forceX = moveForce;
-        }
-        if(forceX != 0.0f) {
-             b2Body_ApplyForceToCenter(playerBodyId, {forceX, 0.0f}, true);
-        }
-
 
         // --- Box2D Step ---
         b2World_Step(worldId, dt, subSteps);
 
         // --- Update SFML Graphics ---
-        // ... (Graphics update is the same) ...
-         for (auto& obj : gameObjects) {
-             if (!obj.hasVisual || B2_IS_NULL(obj.bodyId)) continue;
-            b2Transform transform = b2Body_GetTransform(obj.bodyId);
-            obj.sfShape.setPosition(b2VecToSfVec(transform.p));
-            float angleDegrees = -b2Rot_GetAngle(transform.q) * 180.0f / (float)M_PI;
-            obj.sfShape.setRotation(sf::degrees(angleDegrees));
+        for (auto& obj : gameObjects) {
+            obj.updateShape();
         }
 
         // --- Rendering ---
-        window.clear(sf::Color(135, 206, 235));
+        window.clear(sf::Color(135, 206, 235)); // Cornflower blue
 
         // Draw Game Objects
-        // ... (Drawing game objects is the same) ...
         for (const auto& obj : gameObjects) {
-             if (obj.hasVisual && !B2_IS_NULL(obj.bodyId)) {
-                window.draw(obj.sfShape);
-             }
-        }
-
-
-        // Draw the "Rope" (Distance Joint Visualization)
-        // ... (Drawing the rope is the same) ...
-         if (!B2_IS_NULL(distanceJointId)) {
-             b2BodyId bodyA = b2Joint_GetBodyA(distanceJointId);
-             b2BodyId bodyB = b2Joint_GetBodyB(distanceJointId);
-             b2Vec2 worldAnchorA = b2Body_GetWorldPoint(bodyA, distanceDef.localAnchorA);
-             b2Vec2 worldAnchorB = b2Body_GetWorldPoint(bodyB, distanceDef.localAnchorB);
-             sf::Vector2f sfAnchorA = b2VecToSfVec(worldAnchorA);
-             sf::Vector2f sfAnchorB = b2VecToSfVec(worldAnchorB);
-             sf::VertexArray ropeLine(sf::PrimitiveType::Lines, 2);
-             ropeLine[0].position = sfAnchorA; ropeLine[0].color = sf::Color::Black;
-             ropeLine[1].position = sfAnchorB; ropeLine[1].color = sf::Color::Black;
-             window.draw(ropeLine);
+            obj.draw(window);
         }
 
         window.display();
