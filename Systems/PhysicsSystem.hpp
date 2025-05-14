@@ -20,12 +20,17 @@ public:
 
     void update(float dt) {
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
-            if (ecs->hasComponent<Dynamic>(entity)) {
-                Dynamic& dynamic = ecs->getData<Dynamic>(entity);
-                Body& body = ecs->getData<Body>(entity);
-                dynamic.acceleration = (GRAVITY + externForce[entity]/body.mass);
-                dynamic.velocity += dynamic.acceleration * dt;
-                dynamic.predictedPosition = dynamic.position + dynamic.velocity * dt;
+            // Rigid Rect physics
+            if (ecs->hasComponent<RigidRect>(entity)) {
+                RigidRect& rigidRect = ecs->getData<RigidRect>(entity);
+                if (rigidRect.isStatic) {
+                    continue;
+                }
+                for (int i = 0; i < 4; i++) {
+                    rigidRect.accelerations[i] = (GRAVITY + externForce[entity]/rigidRect.mass);
+                    rigidRect.velocities[i] += rigidRect.accelerations[i] * dt;
+                    rigidRect.predictedPositions[i] = rigidRect.positions[i] + rigidRect.velocities[i] * dt;
+                }
             }
         }
     }
@@ -40,17 +45,14 @@ public:
 
     void PBDupdate(float dt) {
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
-            if (ecs->hasComponent<Dynamic>(entity)) {
-                Dynamic& dynamic = ecs->getData<Dynamic>(entity);
-                dynamic.velocity = (dynamic.predictedPosition - dynamic.position) / dt;
-                dynamic.position = dynamic.predictedPosition;
-                if (ecs->hasComponent<Renderable>(entity)) {
-                    Renderable& renderable = ecs->getData<Renderable>(entity);
-                    if (ecs->hasComponent<Composite>(entity)) {
-                        Composite& composite = ecs->getData<Composite>(entity);
-                        renderable.pointA = dynamic.position;
-                        renderable.pointB = dynamic.position + composite.size;
-                    }
+            if (ecs->hasComponent<RigidRect>(entity)) {
+                RigidRect& rigidRect = ecs->getData<RigidRect>(entity);
+                if (rigidRect.isStatic) {
+                    continue;
+                }
+                for (int i = 0; i < 4; i++) {
+                    rigidRect.velocities[i] = (rigidRect.predictedPositions[i] - rigidRect.positions[i]) / dt;
+                    rigidRect.positions[i] = rigidRect.predictedPositions[i];
                 }
             }
         }

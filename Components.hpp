@@ -10,49 +10,42 @@
 // it removes entities like this: data[entity] = T();
 // also the Component data is stored in an array so it uses the default constructor
 
-enum class ShapeType{
-    LINE,
-    RECT
-};
-
-struct Dynamic{
-    Vec2f position;
-    Vec2f predictedPosition;
-    Vec2f velocity;
-    Vec2f acceleration;
-
-    Dynamic() : position(0, 0), predictedPosition(0, 0), velocity(0, 0), acceleration(0, 0) {}
-    Dynamic(const Vec2f& pos, const Vec2f& predPos, const Vec2f& vel, const Vec2f& acc)
-        : position(pos), predictedPosition(predPos), velocity(vel), acceleration(acc) {}
-};
-
-struct Body{
+struct RigidRect{
     bool isStatic;
+    std::array<Vec2f, 4> positions;
+    std::array<Vec2f, 4> predictedPositions;
+    std::array<Vec2f, 4> velocities;
+    std::array<Vec2f, 4> accelerations;
     float mass;
 
-    Body() : isStatic(false), mass(1.0f) {}
-    Body(bool isStatic, float mass) : isStatic(isStatic), mass(mass) {}
+    std::array<Vec2f, 4> getPositions() const {
+        return positions;
+    }
+
+    RigidRect(const std::array<Vec2f, 4>& positions, bool isStatic, float m = 1.0f)
+        : isStatic(isStatic), positions(positions), predictedPositions(positions),
+          velocities{}, accelerations{}, mass(m) {if (isStatic) mass = 0.0f;}
+
+    RigidRect() : isStatic(false), positions{}, predictedPositions{}, velocities{}, accelerations{}, mass(1.0f) {}
+
+    RigidRect(const Vec2f& pos, const Vec2f& size, bool isStatic, float m = 1.0f)
+        : isStatic(isStatic), positions{pos, pos + Vec2f(size.x, 0), pos + size, pos + Vec2f(0, size.y)},
+          predictedPositions{pos, pos + Vec2f(size.x, 0), pos + size, pos + Vec2f(0, size.y)},
+          velocities{}, accelerations{}, mass(m) {if (isStatic) mass = 0.0f;}
 };
 
-struct Composite{
-    std::vector<Vec2f> points;
+struct RectConstraint{
     Vec2f size;
 
-    Composite() : size(0, 0) {}
-    Composite(const std::vector<Vec2f>& points) : points(points), size(0, 0) {}
-    Composite(const std::vector<Vec2f>& points, const Vec2f& size)
-        : points(points), size(size) {}
+    RectConstraint() : size(0, 0) {}
+    RectConstraint(const Vec2f& size) : size(size) {}
 };
 
-struct Renderable{
-    Vec2f pointA;
-    Vec2f pointB;
-    ShapeType type;
+struct RenderableRect{
+    sf::Color color;
 
-    Renderable() : pointA(0, 0), pointB(0, 0), type(ShapeType::RECT) {}
-    Renderable(const Vec2f& a, const Vec2f& b, ShapeType t)
-        : pointA(a), pointB(b), type(t) {}
-
+    RenderableRect() : color(sf::Color::Green) {}
+    RenderableRect(const sf::Color& c) : color(c) {}
 };
 
 

@@ -15,51 +15,44 @@ public:
 
     void update() {
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
-            if (ecs->hasComponent<Composite>(entity) && ecs->hasComponent<Dynamic>(entity)) {
-                Vec2f& pointA = ecs->getData<Composite>(entity).points[0];
-                Vec2f& pointB = ecs->getData<Composite>(entity).points[1];
-                Vec2f& pointC = ecs->getData<Composite>(entity).points[2];
-                Vec2f& pointD = ecs->getData<Composite>(entity).points[3];
-                float constraintAB = ecs->getData<Composite>(entity).size.x;
-                float constraintAD = ecs->getData<Composite>(entity).size.y;
+            if (ecs->hasComponent<RigidRect>(entity) && ecs->hasComponent<RectConstraint>(entity)) {
+                RigidRect& data = ecs->getData<RigidRect>(entity);
+                if (data.isStatic) continue;
+                RectConstraint& constraintData = ecs->getData<RectConstraint>(entity);
+                Vec2f constraint = constraintData.size;
+                Vec2f& pointA = ecs->getData<RigidRect>(entity).predictedPositions[0];
+                Vec2f& pointB = ecs->getData<RigidRect>(entity).predictedPositions[1];
+                Vec2f& pointC = ecs->getData<RigidRect>(entity).predictedPositions[2];
+                Vec2f& pointD = ecs->getData<RigidRect>(entity).predictedPositions[3];
+                float constraintAB = constraint.x;
+                float constraintAD = constraint.y;
                 float constraintAC = std::sqrt(constraintAB * constraintAB + constraintAD * constraintAD);
-                float mass = ecs->getData<Body>(entity).mass;
-                // for point A
-                applyConstraint(pointA, pointB, constraintAB, mass, mass);
-                applyConstraint(pointA, pointC, constraintAC, mass, mass);
-                applyConstraint(pointA, pointD, constraintAD, mass, mass);
-                // for point B
-                applyConstraint(pointB, pointA, constraintAB, mass, mass);
-                applyConstraint(pointB, pointC, constraintAD, mass, mass);
-                applyConstraint(pointB, pointD, constraintAC, mass, mass);
-                // for point C
-                applyConstraint(pointC, pointA, constraintAC, mass, mass);
-                applyConstraint(pointC, pointB, constraintAD, mass, mass);
-                applyConstraint(pointC, pointD, constraintAB, mass, mass);
-                // for point D
-                applyConstraint(pointD, pointA, constraintAD, mass, mass);
-                applyConstraint(pointD, pointB, constraintAC, mass, mass);
-                applyConstraint(pointD, pointC, constraintAB, mass, mass);
+                float mass = ecs->getData<RigidRect>(entity).mass;
+                // AB constraint
+                applyConstraint(pointA, pointB, constraintAB);
+                // AC constraint
+                applyConstraint(pointA, pointC, constraintAC);
+                // AD constraint
+                applyConstraint(pointA, pointD, constraintAD);
+                // BD constraint
+                applyConstraint(pointB, pointD, constraintAC);
+                // CD constraint
+                applyConstraint(pointC, pointD, constraintAB);
+                // BC constraint
+                applyConstraint(pointB, pointC, constraintAD);
             }
         }
     }
 
-    void applyConstraint(Vec2f& pA, Vec2f& pB, float constraint, float massA, float massB) {
+    void applyConstraint(Vec2f& pA, Vec2f& pB, float constraint) {
         Vec2f delta = pB - pA;
         float distance = delta.length();
-        if (distance == 0) return;
+        if (distance == constraint) return;
+        float val = (1.0f - constraint/distance);
+        Vec2f correction = delta * val;
 
-        Vec2f n = delta/distance;
-
-        float C = distance - constraint;
-        float wSum = (1.0f / massA) + (1.0f / massB);
-
-        if (wSum == 0) return;
-
-        Vec2f correction = C * n;
-
-        pA += - (massA/wSum) * correction;
-        pB += (massB/wSum) * correction;
+        pA += 0.5f * correction;
+        pB += -0.5f * correction;
     }
 };
 

@@ -19,16 +19,21 @@ public:
     void render() {
         window->clear(sf::Color::Black);
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
-            if (ecs->hasComponent<Renderable>(entity)) {
-                Renderable& renderable = ecs->getData<Renderable>(entity);
-                if (renderable.type == ShapeType::RECT) {
-                    sf::RectangleShape rect;
-                    rect.setPosition(sf::Vector2f(renderable.pointA.x, renderable.pointA.y));
-                    rect.setSize(sf::Vector2f(renderable.pointB.x - renderable.pointA.x, renderable.pointB.y - renderable.pointA.y));
-                    rect.setFillColor(sf::Color::Green);
-                    rect.setOutlineColor(sf::Color::Red);
-                    window->draw(rect);
+            // Draw all Rects
+            if (ecs->hasComponent<RenderableRect>(entity)) {
+                RenderableRect& renderData = ecs->getData<RenderableRect>(entity);
+                RigidRect& rigidRect = ecs->getData<RigidRect>(entity);
+
+                std::array<Vec2f, 4> positions = rigidRect.getPositions();
+
+                sf::VertexArray lines(sf::PrimitiveType::LineStrip, 5);
+                for (int i = 0; i < 4; i++) {
+                    lines[i].position = sf::Vector2f(positions[i].x, positions[i].y);
+                    lines[i].color = renderData.color;
                 }
+                lines[4].position = sf::Vector2f(positions[0].x, positions[0].y);
+                lines[4].color = renderData.color;
+                window->draw(lines);
             }
         }
         window->display();

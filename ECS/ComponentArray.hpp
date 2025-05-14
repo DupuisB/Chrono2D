@@ -4,7 +4,7 @@
 #include <array>
 
 using Entity = unsigned int;
-const unsigned int MAX_ENTITIES = 100;
+const unsigned int MAX_ENTITIES = 50;
 
 class IComponentArray {
 public:
