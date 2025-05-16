@@ -20,19 +20,19 @@ public:
         window->clear(sf::Color::Black);
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
             // Draw all Rects
-            if (ecs->hasComponent<RenderableRect>(entity)) {
-                RenderableRect& renderData = ecs->getData<RenderableRect>(entity);
-                RigidRect& rigidRect = ecs->getData<RigidRect>(entity);
+            if (ecs->hasComponent<RenderablePolygon>(entity)) {
+                RenderablePolygon& renderData = ecs->getData<RenderablePolygon>(entity);
+                Position& position = ecs->getData<Position>(entity);
 
-                std::array<Vec2f, 4> positions = rigidRect.getPositions();
+                std::vector<Vec2f> positions = position.positions;
 
-                sf::VertexArray lines(sf::PrimitiveType::LineStrip, 5);
-                for (int i = 0; i < 4; i++) {
+                sf::VertexArray lines(sf::PrimitiveType::LineStrip, positions.size() + 1);
+                for (size_t i = 0; i < positions.size(); i++) {
                     lines[i].position = sf::Vector2f(positions[i].x, positions[i].y);
                     lines[i].color = renderData.color;
                 }
-                lines[4].position = sf::Vector2f(positions[0].x, positions[0].y);
-                lines[4].color = renderData.color;
+                lines[positions.size()].position = sf::Vector2f(positions[0].x, positions[0].y);
+                lines[positions.size()].color = renderData.color;
                 window->draw(lines);
             }
         }

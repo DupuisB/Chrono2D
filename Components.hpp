@@ -2,6 +2,8 @@
 #define COMPONENTS_HPP
 
 #include <SFML/Graphics.hpp>
+#include <vector>
+
 #include "utils/math.hpp"
 #include "ECS/ECS.hpp"
 
@@ -10,42 +12,56 @@
 // it removes entities like this: data[entity] = T();
 // also the Component data is stored in an array so it uses the default constructor
 
-struct RigidRect{
-    bool isStatic;
-    std::array<Vec2f, 4> positions;
-    std::array<Vec2f, 4> predictedPositions;
-    std::array<Vec2f, 4> velocities;
-    std::array<Vec2f, 4> accelerations;
-    float mass;
-
-    std::array<Vec2f, 4> getPositions() const {
-        return positions;
+struct Mass{
+    float m;
+    Mass() : m(1.0f) {}
+    Mass(float m) : m(m) {}
+};
+struct Position{
+    std::vector<Vec2f> positions;
+    Vec2f center;
+    Position() : positions(), center(0, 0) {}
+    Position(const std::vector<Vec2f>& pos) : positions(pos) {
+        center = Vec2f(0, 0);
+        float size = static_cast<float>(positions.size());
+        if (positions.size() == 0) return;
+        for (const auto& p : positions) {
+            center += p;
+        }
+        center /= static_cast<float>(positions.size());
     }
-
-    RigidRect(const std::array<Vec2f, 4>& positions, bool isStatic, float m = 1.0f)
-        : isStatic(isStatic), positions(positions), predictedPositions(positions),
-          velocities{}, accelerations{}, mass(m) {if (isStatic) mass = 0.0f;}
-
-    RigidRect() : isStatic(false), positions{}, predictedPositions{}, velocities{}, accelerations{}, mass(1.0f) {}
-
-    RigidRect(const Vec2f& pos, const Vec2f& size, bool isStatic, float m = 1.0f)
-        : isStatic(isStatic), positions{pos, pos + Vec2f(size.x, 0), pos + size, pos + Vec2f(0, size.y)},
-          predictedPositions{pos, pos + Vec2f(size.x, 0), pos + size, pos + Vec2f(0, size.y)},
-          velocities{}, accelerations{}, mass(m) {if (isStatic) mass = 0.0f;}
+    Position(const std::vector<Vec2f>& pos, const Vec2f& center) : positions(pos), center(center) {}
+};
+struct PredictedPosition{
+    std::vector<Vec2f> predictedPositions;
+    PredictedPosition() : predictedPositions() {}
+    PredictedPosition(const std::vector<Vec2f>& pos) : predictedPositions(pos) {}
+};
+struct Velocity{
+    std::vector<Vec2f> velocities;
+    Velocity() : velocities() {}
+    Velocity(const std::vector<Vec2f>& vel) : velocities(vel) {}
+};
+struct Acceleration{
+    std::vector<Vec2f> accelerations;
+    Acceleration() : accelerations() {}
+    Acceleration(const std::vector<Vec2f>& acc) : accelerations(acc) {}
 };
 
-struct RectConstraint{
-    Vec2f size;
+struct PolygonConstraint{
+    std::vector<float> lengthConstraints;
+    std::vector<std::array<int, 2>> edges;
 
-    RectConstraint() : size(0, 0) {}
-    RectConstraint(const Vec2f& size) : size(size) {}
+    PolygonConstraint() : lengthConstraints(), edges() {}
+    PolygonConstraint(const std::vector<float>& constraints, const std::vector<std::array<int, 2>>& edges) : lengthConstraints(constraints), edges(edges) {}
 };
 
-struct RenderableRect{
+struct RenderablePolygon{
     sf::Color color;
+    bool fill = false;
 
-    RenderableRect() : color(sf::Color::Green) {}
-    RenderableRect(const sf::Color& c) : color(c) {}
+    RenderablePolygon() : color(sf::Color::Green) {}
+    RenderablePolygon(const sf::Color& c) : color(c) {}
 };
 
 

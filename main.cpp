@@ -11,17 +11,37 @@
 
 bool paused = false;
 
-const float TIME_STEP = 5.0f;
-const float TICK = 0.02f;
+const float TIME_STEP = 10.0f;
+const float TICK = 0.01f;
 
 // helper function returns vector of points after creating a rect
-std::vector<Vec2f> createRect(const Vec2f& pos, const Vec2f& size) {
+void createRect(const Vec2f& pos, const Vec2f& size, sf::Color color, std::shared_ptr<ECS> ecs, Entity& entity, bool isStatic) {
     std::vector<Vec2f> points;
+    std::vector<Vec2f> zeros = {Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0)};
     points.push_back(pos);
     points.push_back(pos + Vec2f(size.x, 0));
     points.push_back(pos + size);
     points.push_back(pos + Vec2f(0, size.y));
-    return points;
+    float mass = isStatic ? 0.0f : 1.0f;
+    ecs->addComponent<Mass>(entity, Mass(mass));
+    ecs->addComponent<Position>(entity, Position(points));
+    ecs->addComponent<PredictedPosition>(entity, PredictedPosition(points));
+    if (!isStatic) {
+        ecs->addComponent<Velocity>(entity, Velocity(zeros));
+        ecs->addComponent<Acceleration>(entity, Acceleration(zeros));
+        std::vector<float> constraints;
+        std::vector<std::array<int, 2>> edges;
+        for (int i = 0; i < points.size(); i++) {
+            constraints.push_back((points[(i+1) % points.size()] - points[i]).length());
+            edges.push_back({i, (i+1) % points.size()});
+        }
+        constraints.push_back((points[0] - points[2]).length());
+        constraints.push_back((points[1] - points[3]).length());
+        edges.push_back({0, 2});
+        edges.push_back({1, 3});
+        ecs->addComponent<PolygonConstraint>(entity, PolygonConstraint(constraints, edges));
+    }
+    ecs->addComponent<RenderablePolygon>(entity, RenderablePolygon(color));
 }
 
 // Main function to demonstrate our ECS system with a cube falling onto a ground line
@@ -42,9 +62,8 @@ int main() {
 
     // Create ground entity
     Entity ground = ecs->createEntity();
-    
-    ecs->addComponent<RigidRect>(ground, RigidRect(Vec2f(0.0f, 500.0f), Vec2f(600.0f, 20.0f), true));
-    ecs->addComponent<RenderableRect>(ground, RenderableRect());
+    // Create a static ground rectangle
+    createRect(Vec2f(0.0f, 500.0f), Vec2f(800.0f, 100.0f), sf::Color::Red, ecs, ground, true);
 
     // static cube rotated 45 degrees
     Vec2f pointA = Vec2f(100.0f, 300.0f);
@@ -53,15 +72,18 @@ int main() {
     Vec2f pointD = Vec2f(50.0f, 350.0f);
 
     // Create a static cube entity
-    Entity staticCube = ecs->createEntity();
-    ecs->addComponent<RigidRect>(staticCube, RigidRect({pointA, pointB, pointC, pointD}, true));
-    ecs->addComponent<RenderableRect>(staticCube, RenderableRect(sf::Color::Green));
+    
 
     // Create A point in the square (left top)
     Entity player = ecs->createEntity();
-    ecs->addComponent<RigidRect>(player, RigidRect(Vec2f(50.0f, 100.0f), Vec2f(50.0f, 50.0f), false));
-    ecs->addComponent<RectConstraint>(player, RectConstraint(Vec2f(50.0f, 50.0f)));
-    ecs->addComponent<RenderableRect>(player, RenderableRect(sf::Color::Red));
+    // Create a dynamic cube entity
+    createRect(Vec2f(50.0f, 100.0f), Vec2f(50.0f, 50.0f), sf::Color::Blue, ecs, player, false);
+
+    Entity dynRect = ecs->createEntity();
+    createRect(Vec2f(150.0f, 100.0f), Vec2f(100.0f, 100.0f), sf::Color::Blue, ecs, dynRect, false);
+    // change the mass of the dynamic rectangle
+    Mass& mass = ecs->getData<Mass>(dynRect);
+    mass.m = 100.0f;
 
     // Game loop
     sf::Clock clock;
@@ -80,40 +102,47 @@ int main() {
             if (event.is<sf::Event::KeyPressed>()) {
                 const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
                 if (keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
-                    RigidRect& playerData = ecs->getData<RigidRect>(player);
+                    Velocity& playerData = ecs->getData<Velocity>(player);
                     for (int i=0; i<4; i++) {
                         playerData.velocities[i] += Vec2f(0.0f, -100.0f);
                     }
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Right) {
-                    RigidRect& playerData = ecs->getData<RigidRect>(player);
+                    Velocity& playerData = ecs->getData<Velocity>(player);
                     for (int i=0; i<4; i++) {
-                        playerData.velocities[i].x = 10.0f;
+                        playerData.velocities[i].x = 30.0f;
                     }
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Left) {
-                    RigidRect& playerData = ecs->getData<RigidRect>(player);
+                    Velocity& playerData = ecs->getData<Velocity>(player);
                     for (int i=0; i<4; i++) {
-                        playerData.velocities[i].x = -10.0f;
+                        playerData.velocities[i].x = -30.0f;
                     }
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::S) {
-                    RigidRect& playerData = ecs->getData<RigidRect>(player);
+                    Velocity& playerData = ecs->getData<Velocity>(player);
                     for (int i=0; i<4; i++) {
                         playerData.velocities[i].x = 0.0f;
                     }
+                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Down) {
+                    Velocity& playerData = ecs->getData<Velocity>(player);
+                    for (int i=0; i<4; i++) {
+                        playerData.velocities[i].y = 30.0f;
+                    }
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::R) {
                     // reset cube position
-                    RigidRect& playerData = ecs->getData<RigidRect>(player);
-                    playerData.positions[0] = Vec2f(50.0f, 100.0f);
-                    playerData.positions[1] = Vec2f(100.0f, 100.0f);
-                    playerData.positions[2] = Vec2f(100.0f, 150.0f);
-                    playerData.positions[3] = Vec2f(50.0f, 150.0f);
-                    playerData.predictedPositions[0] = Vec2f(50.0f, 100.0f);
-                    playerData.predictedPositions[1] = Vec2f(100.0f, 100.0f);
-                    playerData.predictedPositions[2] = Vec2f(100.0f, 150.0f);
-                    playerData.predictedPositions[3] = Vec2f(50.0f, 150.0f);
-                    playerData.velocities[0] = Vec2f(0.0f, 0.0f);
-                    playerData.velocities[1] = Vec2f(0.0f, 0.0f);
-                    playerData.velocities[2] = Vec2f(0.0f, 0.0f);
-                    playerData.velocities[3] = Vec2f(0.0f, 0.0f);
+                    Position& playerPosition = ecs->getData<Position>(player);
+                    PredictedPosition& playerPredictedPosition = ecs->getData<PredictedPosition>(player);
+                    Velocity& playerVelocity = ecs->getData<Velocity>(player);
+                    playerPosition.positions[0] = Vec2f(50.0f, 100.0f);
+                    playerPosition.positions[1] = Vec2f(100.0f, 100.0f);
+                    playerPosition.positions[2] = Vec2f(100.0f, 150.0f);
+                    playerPosition.positions[3] = Vec2f(50.0f, 150.0f);
+                    playerPredictedPosition.predictedPositions[0] = Vec2f(50.0f, 100.0f);
+                    playerPredictedPosition.predictedPositions[1] = Vec2f(100.0f, 100.0f);
+                    playerPredictedPosition.predictedPositions[2] = Vec2f(100.0f, 150.0f);
+                    playerPredictedPosition.predictedPositions[3] = Vec2f(50.0f, 150.0f);
+                    playerVelocity.velocities[0] = Vec2f(0.0f, 0.0f);
+                    playerVelocity.velocities[1] = Vec2f(0.0f, 0.0f);
+                    playerVelocity.velocities[2] = Vec2f(0.0f, 0.0f);
+                    playerVelocity.velocities[3] = Vec2f(0.0f, 0.0f);
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::P) {
                     // Pause the simulation
                     paused = !paused;

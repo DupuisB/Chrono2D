@@ -13,6 +13,21 @@ using Vec2f = Vec2<float>;
 using Vec2d = Vec2<double>;
 
 /**
+ * Math helper functions
+ */
+
+// given 2 points A and B, returns the normal vector perpendicular to the segment AB
+template <typename T>
+Vec2<T> normal2Segment(const Vec2<T>& A, const Vec2<T>& B) {
+    Vec2<T> delta = B - A;
+    T length = delta.length();
+    if (length == 0) {
+        return Vec2<T>(0, 0);
+    }
+    return Vec2<T>(delta.y / length, -delta.x / length);
+}
+
+/**
  * @brief 2D vector template class
  * 
  * Implements a 2D vector with basic arithmetic operations

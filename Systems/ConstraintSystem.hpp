@@ -5,6 +5,7 @@
 
 #include "../ECS/ECS.hpp"
 #include "../utils/math.hpp"
+#include "../Components.hpp"
 
 class ConstraintSystem {
 private:
@@ -15,31 +16,18 @@ public:
 
     void update() {
         for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
-            if (ecs->hasComponent<RigidRect>(entity) && ecs->hasComponent<RectConstraint>(entity)) {
-                RigidRect& data = ecs->getData<RigidRect>(entity);
-                if (data.isStatic) continue;
-                RectConstraint& constraintData = ecs->getData<RectConstraint>(entity);
-                Vec2f constraint = constraintData.size;
-                Vec2f& pointA = ecs->getData<RigidRect>(entity).predictedPositions[0];
-                Vec2f& pointB = ecs->getData<RigidRect>(entity).predictedPositions[1];
-                Vec2f& pointC = ecs->getData<RigidRect>(entity).predictedPositions[2];
-                Vec2f& pointD = ecs->getData<RigidRect>(entity).predictedPositions[3];
-                float constraintAB = constraint.x;
-                float constraintAD = constraint.y;
-                float constraintAC = std::sqrt(constraintAB * constraintAB + constraintAD * constraintAD);
-                float mass = ecs->getData<RigidRect>(entity).mass;
-                // AB constraint
-                applyConstraint(pointA, pointB, constraintAB);
-                // AC constraint
-                applyConstraint(pointA, pointC, constraintAC);
-                // AD constraint
-                applyConstraint(pointA, pointD, constraintAD);
-                // BD constraint
-                applyConstraint(pointB, pointD, constraintAC);
-                // CD constraint
-                applyConstraint(pointC, pointD, constraintAB);
-                // BC constraint
-                applyConstraint(pointB, pointC, constraintAD);
+            if (ecs->hasComponent<PolygonConstraint>(entity) && ecs->hasComponent<PredictedPosition>(entity)) {
+                PredictedPosition& predictedPosition = ecs->getData<PredictedPosition>(entity);
+                std::vector<Vec2f>& predictedPositions = predictedPosition.predictedPositions;
+                PolygonConstraint& constraintData = ecs->getData<PolygonConstraint>(entity);
+                std::vector<float>& constraints = constraintData.lengthConstraints;
+                std::vector<std::array<int, 2>>& edges = constraintData.edges;
+                for (int i = 0; i < edges.size(); i++) {
+                    Vec2f& pointA = predictedPositions[edges[i][0]];
+                    Vec2f& pointB = predictedPositions[edges[i][1]];
+                    float constraint = constraints[i];
+                    applyConstraint(pointA, pointB, constraint);
+                }
             }
         }
     }
