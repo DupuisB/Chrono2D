@@ -1,3 +1,0 @@
-C:/Users/medch/OneDrive/Bureau/tutos/-/build/_deps/freetype-subbuild/CMakeFiles/freetype-populate.dir
-C:/Users/medch/OneDrive/Bureau/tutos/-/build/_deps/freetype-subbuild/CMakeFiles/edit_cache.dir
-C:/Users/medch/OneDrive/Bureau/tutos/-/build/_deps/freetype-subbuild/CMakeFiles/rebuild_cache.dir
