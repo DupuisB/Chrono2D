@@ -372,7 +372,7 @@
 		},
 		{
 			"backtrace" : 4,
-			"id" : "vorbisenc::@692b0ee2b61df6760d20"
+			"id" : "vorbisfile::@692b0ee2b61df6760d20"
 		},
 		{
 			"backtrace" : 4,
@@ -380,7 +380,7 @@
 		},
 		{
 			"backtrace" : 4,
-			"id" : "vorbisfile::@692b0ee2b61df6760d20"
+			"id" : "vorbisenc::@692b0ee2b61df6760d20"
 		}
 	],
 	"folder" : 
