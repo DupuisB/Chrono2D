@@ -28,6 +28,9 @@ public:
                 Mass& mass = ecs->getData<Mass>(entity);
                 PredictedPosition& predictedPosition = ecs->getData<PredictedPosition>(entity);
                 for (int i = 0; i < position.positions.size(); i++) {
+                    if (std::abs(velocity.velocities[i].x) > 0) {
+                        externForce[entity].x = (-velocity.velocities[i].x/std::abs(velocity.velocities[i].x)) * 5.0f;
+                    }
                     acceleration.accelerations[i] = GRAVITY + externForce[entity] / mass.m;
                     velocity.velocities[i] += acceleration.accelerations[i] * dt;
                     predictedPosition.predictedPositions[i] = position.positions[i] + velocity.velocities[i] * dt;
@@ -51,7 +54,7 @@ public:
                 PredictedPosition& predictedPosition = ecs->getData<PredictedPosition>(entity);
                 Velocity& velocity = ecs->getData<Velocity>(entity);
                 for (int i = 0; i < position.positions.size(); i++) {
-                    velocity.velocities[i] = (predictedPosition.predictedPositions[i] - position.positions[i]) / dt;
+                    velocity.velocities[i] = (predictedPosition.predictedPositions[i] - position.positions[i]) / (dt * 100.0f);
                     position.positions[i] = predictedPosition.predictedPositions[i];
                 }
             }

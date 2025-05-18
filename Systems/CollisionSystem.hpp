@@ -27,7 +27,7 @@ public:
 
     void detectCollisions() {
         for (Entity entityA = 0; entityA < MAX_ENTITIES; entityA++) {
-            for (Entity entityB = 0; entityB < MAX_ENTITIES; entityB++) {
+            for (Entity entityB = entityA + 1; entityB < MAX_ENTITIES; entityB++) {
                 if (ecs->hasComponent<Mass>(entityA) && ecs->hasComponent<Mass>(entityB) && ecs->hasComponent<Position>(entityA) && ecs->hasComponent<Position>(entityB) && entityA != entityB) {
                     Mass& massA = ecs->getData<Mass>(entityA);
                     Mass& massB = ecs->getData<Mass>(entityB);

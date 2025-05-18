@@ -104,7 +104,7 @@ int main() {
                 if (keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
                     Velocity& playerData = ecs->getData<Velocity>(player);
                     for (int i=0; i<4; i++) {
-                        playerData.velocities[i] += Vec2f(0.0f, -100.0f);
+                        playerData.velocities[i] += Vec2f(0.0f, -30.0f);
                     }
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Right) {
                     Velocity& playerData = ecs->getData<Velocity>(player);
@@ -143,9 +143,31 @@ int main() {
                     playerVelocity.velocities[1] = Vec2f(0.0f, 0.0f);
                     playerVelocity.velocities[2] = Vec2f(0.0f, 0.0f);
                     playerVelocity.velocities[3] = Vec2f(0.0f, 0.0f);
+                    // reset the dynamic cube too
+                    Position& dynRectPosition = ecs->getData<Position>(dynRect);
+                    PredictedPosition& dynRectPredictedPosition = ecs->getData<PredictedPosition>(dynRect);
+                    Velocity& dynRectVelocity = ecs->getData<Velocity>(dynRect);
+                    dynRectPosition.positions[0] = Vec2f(150.0f, 100.0f);
+                    dynRectPosition.positions[1] = Vec2f(250.0f, 100.0f);
+                    dynRectPosition.positions[2] = Vec2f(250.0f, 200.0f);
+                    dynRectPosition.positions[3] = Vec2f(150.0f, 200.0f);
+                    dynRectPredictedPosition.predictedPositions[0] = Vec2f(150.0f, 100.0f);
+                    dynRectPredictedPosition.predictedPositions[1] = Vec2f(250.0f, 100.0f);
+                    dynRectPredictedPosition.predictedPositions[2] = Vec2f(250.0f, 200.0f);
+                    dynRectPredictedPosition.predictedPositions[3] = Vec2f(150.0f, 200.0f);
+                    dynRectVelocity.velocities[0] = Vec2f(0.0f, 0.0f);
+                    dynRectVelocity.velocities[1] = Vec2f(0.0f, 0.0f);
+                    dynRectVelocity.velocities[2] = Vec2f(0.0f, 0.0f);
+                    dynRectVelocity.velocities[3] = Vec2f(0.0f, 0.0f);
                 } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::P) {
                     // Pause the simulation
                     paused = !paused;
+                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::E) {
+                    Velocity& playerData = ecs->getData<Velocity>(player);
+                    playerData.velocities[1] = Vec2f(0.0f, -15.0f);
+                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::A) {
+                    Velocity& playerData = ecs->getData<Velocity>(player);
+                    playerData.velocities[0] = Vec2f(0.0f, -15.0f);
                 }
             }
         }
@@ -154,8 +176,8 @@ int main() {
         if (!paused) {
             // Update systems
             physicsSystem.update(TICK * TIME_STEP);
+            collisionSystem.detectCollisions();
             for (int i = 0; i < 10; i++) {
-                collisionSystem.detectCollisions();
                 constraintSystem.update();
             }
             physicsSystem.PBDupdate(TICK * TIME_STEP);
