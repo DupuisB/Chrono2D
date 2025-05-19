@@ -18,7 +18,13 @@ public:
 
     void render() {
         window->clear(sf::Color::Black);
-        for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
+        renderRigidBodies();
+        renderVelocity();
+        window->display();
+    }
+
+    void renderRigidBodies() {
+            for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
             // Draw all Rects
             if (ecs->hasComponent<RenderablePolygon>(entity)) {
                 RenderablePolygon& renderData = ecs->getData<RenderablePolygon>(entity);
@@ -36,7 +42,28 @@ public:
                 window->draw(lines);
             }
         }
-        window->display();
+    }
+
+    void renderVelocity() {
+        for (Entity entity = 0; entity < MAX_ENTITIES; entity++) {
+            if (ecs->hasComponent<Velocity>(entity)) {
+                Velocity& velocityData = ecs->getData<Velocity>(entity);
+                Position& position = ecs->getData<Position>(entity);
+
+                std::vector<Vec2f> positions = position.positions;
+                std::vector<Vec2f> velocities = velocityData.velocities;
+
+                sf::VertexArray lines(sf::PrimitiveType::Lines, positions.size() * 2);
+
+                for (size_t i = 0; i < positions.size(); i++) {
+                    lines[i * 2].position = sf::Vector2f(positions[i].x, positions[i].y);
+                    lines[i * 2].color = sf::Color::Green;
+                    lines[i * 2 + 1].position = sf::Vector2f(positions[i].x + velocities[i].x, positions[i].y + velocities[i].y);
+                    lines[i * 2 + 1].color = sf::Color::Green;
+                }
+                window->draw(lines);
+            }
+        }
     }
 
 };

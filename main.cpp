@@ -33,7 +33,13 @@ void createRect(const Vec2f& pos, const Vec2f& size, sf::Color color, std::share
         std::vector<std::array<int, 2>> edges;
         for (int i = 0; i < points.size(); i++) {
             constraints.push_back((points[(i+1) % points.size()] - points[i]).length());
-            edges.push_back({i, (i+1) % points.size()});
+            std::array<int, 2> edge;
+            if (i == points.size() - 1) {
+                edge = {i, 0};
+            } else {
+                edge = {i, i+1};
+            }
+            edges.push_back(edge);
         }
         constraints.push_back((points[0] - points[2]).length());
         constraints.push_back((points[1] - points[3]).length());
@@ -176,8 +182,8 @@ int main() {
         if (!paused) {
             // Update systems
             physicsSystem.update(TICK * TIME_STEP);
-            collisionSystem.detectCollisions();
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < 20; i++) {
+                collisionSystem.detectCollisions();
                 constraintSystem.update();
             }
             physicsSystem.PBDupdate(TICK * TIME_STEP);

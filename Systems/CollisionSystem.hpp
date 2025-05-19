@@ -10,9 +10,9 @@
 
 struct SATResult {
     bool collision = false;
-    Vec2f mtv;
+    Vec2f mtv = Vec2f(0, 0);
     float overlap = 0.0f;
-    Vec2f axis;
+    Vec2f axis = Vec2f(0, 0);
 };
 
 
@@ -36,12 +36,14 @@ public:
                     PredictedPosition& positionB = ecs->getData<PredictedPosition>(entityB);
                     std::vector<Vec2f>& polygonA = positionA.predictedPositions;
                     std::vector<Vec2f>& polygonB = positionB.predictedPositions;
+                    Vec2f centerA = ecs->getData<Position>(entityA).center;
+                    Vec2f centerB = ecs->getData<Position>(entityB).center;
                     // Check for each edge of polygonA against each edge of polygonB
                     for(int i = 0; i < polygonA.size(); i++) {
                         for (int j = 0; j < polygonB.size(); j++) {
-                            std::vector<Vec2f> sideA = { polygonA[i], polygonA[(i + 1) % polygonA.size()] };
-                            std::vector<Vec2f> sideB = { polygonB[j], polygonB[(j + 1) % polygonB.size()] };
-                            SATResult result = satCollision(sideA, sideB);
+                            std::array<Vec2f, 2> sideA = {polygonA[i], polygonA[(i+1) % polygonA.size()]};
+                            std::array<Vec2f, 2> sideB = {polygonB[j], polygonB[(j+1) % polygonB.size()]};
+                            SATResult result = satCollision(sideA, sideB, centerA, centerB);
                             if(!result.collision) continue;
                             // move the current sides that are colliding
                             float kA = massA.m / (massA.m + massB.m);
@@ -58,15 +60,26 @@ public:
         }
     }
 
-    SATResult satCollision(const std::vector<Vec2f>& polygonA, const std::vector<Vec2f>& polygonB) {
+    SATResult satCollision(const std::array<Vec2f, 2> sideA, const std::array<Vec2f, 2> sideB, const Vec2f centerA, const Vec2f centerB) {
         SATResult result;
         float minOverlap = 100000000000.0f;
         Vec2f smallestAxis;
 
-        if (!checkAxes(polygonA ,polygonA, polygonB, minOverlap, smallestAxis)) return result;
-        if (!checkAxes(polygonB ,polygonB, polygonA, minOverlap, smallestAxis)) return result;
-            
-        Vec2f direction = computePolygonCenter(polygonB) - computePolygonCenter(polygonA);
+        float overlapA, overlapB;
+        Vec2f axisA, axisB;
+
+        if (!checkAxes(sideA ,sideA, sideB, overlapA, axisA)) return result;
+        if (!checkAxes(sideB ,sideB, sideA, overlapB, axisB)) return result;
+
+        if (overlapA < overlapB) {
+            minOverlap = overlapA;
+            smallestAxis = axisA;
+        } else {
+            minOverlap = overlapB;
+            smallestAxis = axisB;
+        }
+
+        Vec2f direction = centerB - centerA;
         if (direction.dot(smallestAxis) < 0) {
             smallestAxis = -1.0f * smallestAxis;
         }
@@ -78,53 +91,29 @@ public:
         return result;
     }
 
-    bool checkAxes(const std::vector<Vec2f>& polygonWithAxes, const std::vector<Vec2f>& polygonA, const std::vector<Vec2f>& polygonB, float& minOverlap, Vec2f& smallestAxis) {
-        std::vector<Vec2f> axes = getPolygonSideNormals(polygonWithAxes);
-        for (const Vec2f& axis : axes) {
-            auto [minA, maxA] = projectPolygonOntoAxis(polygonA, axis);
-            auto [minB, maxB] = projectPolygonOntoAxis(polygonB, axis);
-            if (projectionDoNotOverlap(minA, maxA, minB, maxB)) return false;
-            float overlap = std::min(maxA - minB, maxB - minA);
-            if (overlap < minOverlap) {
-                minOverlap = overlap;
-                smallestAxis = axis;
-            }
-        }
+    bool checkAxes(const std::array<Vec2f, 2> sideWithAxis, const std::array<Vec2f, 2> sideA, const std::array<Vec2f, 2> sideB, float& overlap, Vec2f& axis) {
+        Vec2f A = sideWithAxis[0];
+        Vec2f B = sideWithAxis[1];
+        axis = normal2Segment(A, B);
+        auto [minA, maxA] = projectSideOntoAxis(sideA, axis);
+        auto [minB, maxB] = projectSideOntoAxis(sideB, axis);
+        if (projectionDoNotOverlap(minA, maxA, minB, maxB)) return false;
+        overlap = std::min(maxA - minB, maxB - minA);
         return true;
     }
 
-    std::vector<Vec2f> getPolygonSideNormals(const std::vector<Vec2f>& polygon) {
-        std::vector<Vec2f> axes;
-        for(int i = 0; i < polygon.size(); i++) {
-            Vec2f A = polygon[i];
-            Vec2f B = polygon[(i + 1) % polygon.size()]; // Wrap around
-            axes.push_back(normal2Segment(A, B));
-        }
-        return axes;
-    }
-
-    std::array<float, 2> projectPolygonOntoAxis(const std::vector<Vec2f>& polygon, const Vec2f& axis) {
+    std::array<float, 2> projectSideOntoAxis(const std::array<Vec2f, 2> side, const Vec2f axis) {
         float min, max;
-        float projection = polygon[0].dot(axis);
+        float projection = side[0].dot(axis);
         min = max = projection;
-        for (int i = 1; i < polygon.size(); i++) {
-            projection = polygon[i].dot(axis);
-            if (projection < min) min = projection;
-            if (projection > max) max = projection;
-        }
+        float projection2 = side[1].dot(axis);
+        if (projection2 < min) min = projection2;
+        if (projection2 > max) max = projection2;
         return {min, max};
     }
 
     bool projectionDoNotOverlap(float minA, float maxA, float minB, float maxB) {
         return (minA >= maxB || minB >= maxA);
-    }
-
-    Vec2f computePolygonCenter(const std::vector<Vec2f>& polygon) {
-        Vec2f center(0, 0);
-        for (const Vec2f& point : polygon) {
-            center += point;
-        }
-        return center / static_cast<float>(polygon.size());
     }
 };
 #endif // COLLISION_SYSTEM_HPP

@@ -54,7 +54,7 @@ public:
                 PredictedPosition& predictedPosition = ecs->getData<PredictedPosition>(entity);
                 Velocity& velocity = ecs->getData<Velocity>(entity);
                 for (int i = 0; i < position.positions.size(); i++) {
-                    velocity.velocities[i] = (predictedPosition.predictedPositions[i] - position.positions[i]) / (dt * 100.0f);
+                    velocity.velocities[i] = (predictedPosition.predictedPositions[i] - position.positions[i]) / (dt);
                     position.positions[i] = predictedPosition.predictedPositions[i];
                 }
             }

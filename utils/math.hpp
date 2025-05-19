@@ -18,13 +18,18 @@ using Vec2d = Vec2<double>;
 
 // given 2 points A and B, returns the normal vector perpendicular to the segment AB
 template <typename T>
-Vec2<T> normal2Segment(const Vec2<T>& A, const Vec2<T>& B) {
+Vec2<T> normal2Segment(const Vec2<T> A, const Vec2<T> B) {
     Vec2<T> delta = B - A;
     T length = delta.length();
-    if (length == 0) {
-        return Vec2<T>(0, 0);
-    }
+    if (length == 0) return Vec2<T> (0, 0);
     return Vec2<T>(delta.y / length, -delta.x / length);
+}
+
+template <typename T>
+Vec2<T> normal2Vector(const Vec2<T> v) {
+    T length = v.length();
+    if (length == 0) return Vec2<T> (0, 0);
+    return Vec2<T> (v.y/length, -v.x/length);
 }
 
 /**
