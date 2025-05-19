@@ -76,7 +76,7 @@ int main() {
 
     // Advanced jump mechanics timers
     const float coyoteTimeThreshold = 0.1f; // Allows jumping shortly after leaving a platform
-    float coyoteTimer = 0.0f;
+    float coyoteTimer = 1.0f;
     const float jumpBufferThreshold = 0.1f; // Allows a jump to register if key pressed shortly before landing
     float jumpBufferTimer = 0.0f;
 
@@ -145,7 +145,7 @@ int main() {
                     }
 
                     // Player is grounded if contact normal is mostly upward (supporting)
-                    if (isOtherGround && supportingNormalY > 0.7f) {
+                    if (supportingNormalY > 0.7f) {
                         isGrounded = true;
                         break; 
                     }
