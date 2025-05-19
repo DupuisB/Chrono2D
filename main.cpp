@@ -52,7 +52,28 @@ int main() {
 #if SELECTED_MAP == 1
     loadMap1(worldId, gameObjects, playerBodyId, groundPlatformIds);
 #else
-    // loadDefaultMap(worldId, gameObjects, playerBodyId, groundPlatformIds); // Example for a default map
+    // Si aucune carte n'est sélectionnée, créer un joueur par défaut
+    b2Vec2 playerSize = {1.0f, 2.0f};
+    b2Vec2 playerPosition = {5.0f, 5.0f};
+    playerBodyId = createPlayer(worldId, playerPosition, playerSize);
+    
+    // Ajouter le joueur aux objets de jeu
+    GameObject playerObject(playerBodyId, sf::Color::Blue);
+    gameObjects.push_back(playerObject);
+    
+    // Créer une plateforme de sol simple
+    b2BodyDef groundBodyDef = b2DefaultBodyDef();
+    groundBodyDef.position = {0.0f, 0.0f};
+    b2BodyId groundBodyId = b2CreateBody(worldId, &groundBodyDef);
+    groundPlatformIds.push_back(groundBodyId);
+    
+    b2Polygon groundBox;
+    b2Polygon_SetAsBox(&groundBox, 20.0f, 0.5f, {0.0f, -2.0f}, 0.0f);
+    b2ShapeDef shapeDef = b2DefaultShapeDef();
+    b2CreatePolygonShape(groundBodyId, &shapeDef, &groundBox);
+    
+    GameObject groundObject(groundBodyId, sf::Color::Green);
+    gameObjects.push_back(groundObject);
 #endif
     // --- End Load Map Objects ---
 
@@ -66,16 +87,12 @@ int main() {
         dt = std::min(dt, 0.05f); // Cap delta time to prevent physics instability with large steps
 
         // --- SFML Event Handling ---
-        jumpKeyJustPressed = false; // Reset per frame
-        previousJumpKeyHeld = jumpKeyHeld;
-
+        bool jumpKeyHeld = false;
         while (std::optional<sf::Event> event = window.pollEvent()) {
             if (event) {
                 if (event->is<sf::Event::Closed>()) {
                     window.close();
                 }
-                // Key press/release events can be handled here if needed for single-trigger actions,
-                // but continuous actions (like holding jump) are better handled by sf::Keyboard::isKeyPressed.
             }
         }
 
@@ -84,10 +101,6 @@ int main() {
         bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
         bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
         jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
-
-        if (jumpKeyHeld && !previousJumpKeyHeld) {
-            jumpKeyJustPressed = true; // Detects the frame the jump key was pressed
-        }
 
         // --- Player Movement ---
         // Utilise la fonction movePlayer de player.cpp au lieu de duplicer la logique

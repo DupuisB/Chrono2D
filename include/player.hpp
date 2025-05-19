@@ -25,26 +25,4 @@
 void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, std::vector<b2BodyId>& groundPlatformIds,
                 bool jumpKeyHeld, bool leftKeyHeld, bool rightKeyHeld, float dt);
 
-/**
- * @brief Creates a player object in the physics world
- * 
- * @param worldId The Box2D world ID
- * @param position Initial position for the player
- * @param size Size of the player's physical body
- * @return b2BodyId ID of the created player body
- */
-/**b2BodyId createPlayer(b2WorldId worldId, b2Vec2 position, b2Vec2 size);
-*/
-#endif // PLAYER_HPP
-
-
-
-
-
-
-
-
-
-
-
 #endif // PLAYER_HPP

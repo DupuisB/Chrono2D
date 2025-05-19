@@ -5,9 +5,9 @@
 void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, std::vector<b2BodyId>& groundPlatformIds,
                 bool jumpKeyHeld, bool leftKeyHeld, bool rightKeyHeld, float dt) {
     // --- Player Movement Variables ---
-    static const float moveForce = 10.0f; // Force applied for horizontal movement
+    static const float moveForce = 70.0f; // Force applied for horizontal movement
     static const float maxHorizontalSpeed = 5.0f; // Maximum horizontal speed
-    static const float jumpImpulseMagnitude = 10.0f; // Impulse magnitude for jumping
+    static const float jumpImpulseMagnitude = 25.0f; // Impulse magnitude for jumping
     static const float jumpCutMultiplier = 0.5f; // Multiplier to reduce upward velocity when jump key is released
     static const float coyoteTimeThreshold = 0.1f; // Time allowed to jump after leaving a platform
     static const float jumpBufferThreshold = 0.1f; // Time allowed to jump after pressing the jump key
@@ -143,31 +143,4 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, std::vector<b2BodyId>&
             b2Body_ApplyForceToCenter(playerBodyId, {forceX, 0.0f}, true);
         }
     }
-}
-
-// Implementation of the createPlayer function
-b2BodyId createPlayer(b2WorldId worldId, b2Vec2 position, b2Vec2 size) {
-    // Create body definition for a dynamic body
-    b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.type = b2_dynamicBody;
-    bodyDef.position = position;
-    bodyDef.linearDamping = 0.2f; // Add some damping to prevent sliding
-    bodyDef.fixedRotation = true; // Prevent rotation for a platformer character
-    
-    b2BodyId playerBodyId = b2CreateBody(worldId, &bodyDef);
-    
-    // Create box shape for player
-    b2Polygon box;
-    b2Polygon_SetAsBox(&box, size.x / 2.0f, size.y / 2.0f);
-    
-    // Create fixture definition
-    b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.density = 1.0f;
-    shapeDef.friction = 0.3f;
-    shapeDef.restitution = 0.0f; // No bounce
-    
-    // Create the collision shape
-    b2CreatePolygonShape(playerBodyId, &shapeDef, &box);
-    
-    return playerBodyId;
 }
