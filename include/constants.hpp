@@ -1,6 +1,12 @@
 #ifndef CONSTANTS_HPP
 #define CONSTANTS_HPP
 
+/**
+ * @file constants.hpp
+ * @brief Defines global constants used throughout the application.
+ * This includes settings for map selection, window dimensions, and physics scaling.
+ */
+
 // --- Map Selection ---
 #define SELECTED_MAP 1 // Set this to the desired map number
 
