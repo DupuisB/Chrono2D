@@ -31,7 +31,7 @@ add_subdirectory(dep/box2d)
 
 # --- Define Your Game Executable ---
 # Creates an executable named 'sfml_blob' from main.cpp and src/game_object.cpp.
-add_executable(sfml_blob main.cpp src/game_object.cpp)
+add_executable(sfml_blob main.cpp src/game_object.cpp src/player.cpp)
 
 # --- Add Include Directory ---
 # Specifies the directory where header files (e.g., constants.hpp, utils.hpp, game_object.hpp) are located.
