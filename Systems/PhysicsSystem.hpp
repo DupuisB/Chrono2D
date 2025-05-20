@@ -57,6 +57,7 @@ public:
                     velocity.velocities[i] = (predictedPosition.predictedPositions[i] - position.positions[i]) / (dt);
                     position.positions[i] = predictedPosition.predictedPositions[i];
                 }
+                position.updateCenter();
             }
         }
     }

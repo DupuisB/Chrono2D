@@ -78,6 +78,11 @@ int main() {
     Vec2f pointD = Vec2f(50.0f, 350.0f);
 
     // Create a static cube entity
+    Entity staticCube = ecs->createEntity();
+    ecs->addComponent<Mass>(staticCube, Mass(0.0f));
+    ecs->addComponent<Position>(staticCube, Position({pointA, pointB, pointC, pointD}));
+    ecs->addComponent<PredictedPosition>(staticCube, PredictedPosition({pointA, pointB, pointC, pointD}));
+    ecs->addComponent<RenderablePolygon>(staticCube, RenderablePolygon(sf::Color::Green));
     
 
     // Create A point in the square (left top)
@@ -89,7 +94,7 @@ int main() {
     createRect(Vec2f(150.0f, 100.0f), Vec2f(100.0f, 100.0f), sf::Color::Blue, ecs, dynRect, false);
     // change the mass of the dynamic rectangle
     Mass& mass = ecs->getData<Mass>(dynRect);
-    mass.m = 100.0f;
+    mass.m = 1.0f;
 
     // Game loop
     sf::Clock clock;
@@ -183,8 +188,10 @@ int main() {
             // Update systems
             physicsSystem.update(TICK * TIME_STEP);
             for (int i = 0; i < 20; i++) {
-                collisionSystem.detectCollisions();
                 constraintSystem.update();
+            }
+            for (int i = 0; i < 20; i++) {
+                collisionSystem.detectCollisions();
             }
             physicsSystem.PBDupdate(TICK * TIME_STEP);
             renderSystem.render();

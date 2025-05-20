@@ -31,6 +31,15 @@ struct Position{
         center /= static_cast<float>(positions.size());
     }
     Position(const std::vector<Vec2f>& pos, const Vec2f& center) : positions(pos), center(center) {}
+    void updateCenter() {
+        center = Vec2f(0, 0);
+        float size = static_cast<float>(positions.size());
+        if (positions.size() == 0) return;
+        for (const auto& p : positions) {
+            center += p;
+        }
+        center /= static_cast<float>(positions.size());
+    }
 };
 struct PredictedPosition{
     std::vector<Vec2f> predictedPositions;

@@ -34,8 +34,8 @@ public:
                     if (massA.m == 0.0f && massB.m == 0.0f) continue;
                     PredictedPosition& positionA = ecs->getData<PredictedPosition>(entityA);
                     PredictedPosition& positionB = ecs->getData<PredictedPosition>(entityB);
-                    std::vector<Vec2f>& polygonA = positionA.predictedPositions;
-                    std::vector<Vec2f>& polygonB = positionB.predictedPositions;
+                    std::vector<Vec2f> polygonA = positionA.predictedPositions;
+                    std::vector<Vec2f> polygonB = positionB.predictedPositions;
                     Vec2f centerA = ecs->getData<Position>(entityA).center;
                     Vec2f centerB = ecs->getData<Position>(entityB).center;
                     // Check for each edge of polygonA against each edge of polygonB
@@ -49,12 +49,16 @@ public:
                             float kA = massA.m / (massA.m + massB.m);
                             float kB = massB.m / (massA.m + massB.m);
                             Vec2f mtv = result.mtv;
+
                             polygonA[i] -= kA * mtv;
                             polygonA[(i + 1) % polygonA.size()] -= kA * mtv;
                             polygonB[j] += kB * mtv;
                             polygonB[(j + 1) % polygonB.size()] += kB * mtv;
                         }
                     }
+                    // update the predicted positions of the polygons
+                    positionA.predictedPositions = polygonA;
+                    positionB.predictedPositions = polygonB;
                 }
             }
         }
