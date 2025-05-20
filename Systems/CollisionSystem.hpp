@@ -117,7 +117,7 @@ public:
     }
 
     bool projectionDoNotOverlap(float minA, float maxA, float minB, float maxB) {
-        return (minA >= maxB || minB >= maxA);
+        return (minA > maxB || minB > maxA);
     }
 };
 #endif // COLLISION_SYSTEM_HPP
