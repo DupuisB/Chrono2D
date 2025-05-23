@@ -45,9 +45,11 @@ public:
                         if (!result.collision) continue;
 
                         float kA = massA.m / (massA.m + massB.m);
+                        float kB = massB.m / (massA.m + massB.m);
                         Vec2f mtv = result.mtv;
 
                         point -= kA * mtv;
+                        for (auto& pb : polygonB) pb += (kB / polygonB.size()) * mtv;
                     }
                 }
             }
