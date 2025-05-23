@@ -187,9 +187,9 @@ int main() {
         if (!paused) {
             // Update systems
             physicsSystem.update(TICK * TIME_STEP);
-            for (int i = 0; i < 20; i++) {
+            collisionSystem.detectCollisions();
+            for (int i = 0; i < 1; i++) {
                 constraintSystem.update();
-                collisionSystem.detectCollisions();
             }
             physicsSystem.PBDupdate(TICK * TIME_STEP);
             renderSystem.render();

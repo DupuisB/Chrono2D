@@ -22,7 +22,7 @@ Vec2<T> normal2Segment(const Vec2<T> A, const Vec2<T> B) {
     Vec2<T> delta = B - A;
     T length = delta.length();
     if (length == 0) return Vec2<T> (0, 0);
-    return Vec2<T>(delta.y / length, -delta.x / length);
+    return Vec2<T>(-delta.y / length, delta.x / length);
 }
 
 template <typename T>
