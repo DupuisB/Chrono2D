@@ -56,9 +56,7 @@ int main() {
     std::vector<Vec2f> rightWallPoints = makeRect(Vec2f(750.0f, 0.0f), 50.0f, 499.0f);
     setupRigidBody(rightWall, ecs, rightWallPoints, 0.0f, sf::Color::Red, true);
 
-    // Create A point in the square (left top)
     Entity player = ecs->createEntity();
-    // Create a dynamic cube entity
     std::vector<Vec2f> cubePoints = makePolygon(Vec2f(400.0f, 100.0f), 50.0f, 4, 0.0f);
     ecs->addComponent<ControlledEntity>(player, ControlledEntity());
     keyEventSystem.updateControlledEntity();
