@@ -5,6 +5,16 @@
 #include "../Components.hpp"
 #include "../utils/math.hpp"
 
+const float MAX_VELOCITY_MOVE_SPEED = 50.0f;
+const float MOVE_SPEED_MULTIPLIER = 10.0f;
+
+enum class Direction {
+    Up,
+    Down,
+    Left,
+    Right
+};
+
 class KeyEventSystem {
 private:
     std::shared_ptr<ECS> ecs;
@@ -25,21 +35,13 @@ public:
                 velocity.velocities[i] += Vec2f(0, -25.0f);
             }
         } else if (keyEvent->code == sf::Keyboard::Key::Left) {
-            for (int i = 0; i < velocity.velocities.size(); i++) {
-                velocity.velocities[i] += Vec2f(-5.0f, 0);
-            }
+            moveControlledEntity(Direction::Left);
         } else if (keyEvent->code == sf::Keyboard::Key::Right) {
-            for (int i = 0; i < velocity.velocities.size(); i++) {
-                velocity.velocities[i] += Vec2f(5.0f, 0);
-            }
+            moveControlledEntity(Direction::Right);
         } else if (keyEvent->code == sf::Keyboard::Key::Down) {
-            for (int i = 0; i < velocity.velocities.size(); i++) {
-                velocity.velocities[i] += Vec2f(0, 10.0f);
-            }
+            moveControlledEntity(Direction::Down);
         } else if (keyEvent->code == sf::Keyboard::Key::Up) {
-            for (int i = 0; i < velocity.velocities.size(); i++) {
-                velocity.velocities[i] += Vec2f(0, -15.0f);
-            }
+            moveControlledEntity(Direction::Up);
         } else if (keyEvent->code == sf::Keyboard::Key::R) {
             resetInitialPositions();
         } else if (keyEvent->code == sf::Keyboard::Key::S) {
@@ -74,6 +76,34 @@ public:
                 for (int i = 0; i < predictedPosition.predictedPositions.size(); i++) {
                     predictedPosition.predictedPositions[i] = initialPositions[i];
                 }
+            }
+        }
+    }
+
+    void moveControlledEntity(Direction direction) {
+        Position& position = ecs->getData<Position>(controlledEntity);
+        Velocity& velocity = ecs->getData<Velocity>(controlledEntity);
+        Vec2f moveDir;
+        switch (direction) {
+            case Direction::Up: moveDir = Vec2f(0, -1.0f); break;
+            case Direction::Down: moveDir = Vec2f(0, 1.0f); break;
+            case Direction::Left: moveDir = Vec2f(-1.0f, 0); break;
+            case Direction::Right: moveDir = Vec2f(1.0f, 0); break;
+        }
+        for (auto& v: velocity.velocities) {
+            if (moveDir.x != 0) {
+                if (v.x * moveDir.x < 0) v.x = 0;
+                if (std::abs(v.x + moveDir.x * MOVE_SPEED_MULTIPLIER) > MAX_VELOCITY_MOVE_SPEED) {
+                    return; // prevent exceeding max velocity
+                }
+                v.x += moveDir.x * MOVE_SPEED_MULTIPLIER;
+            }
+            if (moveDir.y != 0) {
+                if (v.y * moveDir.y < 0) v.y = 0;
+                if (std::abs(v.y + moveDir.y * MOVE_SPEED_MULTIPLIER) > MAX_VELOCITY_MOVE_SPEED) {
+                    return; // prevent exceeding max velocity
+                }
+                v.y += moveDir.y * MOVE_SPEED_MULTIPLIER;
             }
         }
     }

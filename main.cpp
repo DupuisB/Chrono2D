@@ -44,6 +44,18 @@ int main() {
     std::vector<Vec2f> groundPoints = makeRect(Vec2f(0.0f, 500.0f), 800.0f, 50.0f);
     setupRigidBody(ground, ecs, groundPoints, 0.0f, sf::Color::Red, true);
 
+    Entity someRect = ecs->createEntity();
+    std::vector<Vec2f> someRectPoints = makeRect(Vec2f(200.0f, 400.0f), 100.0f, 50.0f, 45.0f);
+    setupRigidBody(someRect, ecs, someRectPoints, 0.0f, sf::Color::Red, true);
+
+    Entity leftWall = ecs->createEntity();
+    std::vector<Vec2f> leftWallPoints = makeRect(Vec2f(0.0f, 0.0f), 50.0f, 490.0f);
+    setupRigidBody(leftWall, ecs, leftWallPoints, 0.0f, sf::Color::Red, true);
+
+    Entity rightWall = ecs->createEntity();
+    std::vector<Vec2f> rightWallPoints = makeRect(Vec2f(750.0f, 0.0f), 50.0f, 499.0f);
+    setupRigidBody(rightWall, ecs, rightWallPoints, 0.0f, sf::Color::Red, true);
+
     // Create A point in the square (left top)
     Entity player = ecs->createEntity();
     // Create a dynamic cube entity
@@ -55,6 +67,17 @@ int main() {
     Entity dynRect = ecs->createEntity();
     std::vector<Vec2f> rectPoints = makePolygon(Vec2f(150.0f, 100.0f), 100.0f, 4, 0.0f);
     setupRigidBody(dynRect, ecs, rectPoints, 1.0f, sf::Color::Blue, false);
+
+    // create dynamic triangle entity
+    Entity triangle = ecs->createEntity();
+    std::vector<Vec2f> trianglePoints = makePolygon(Vec2f(500.0f, 100.0f), 50.0f, 3, 0.0f);
+    setupRigidBody(triangle, ecs, trianglePoints, 1.0f, sf::Color::Blue, false);
+
+    // create dynamic pentagon entity
+    Entity pentagon = ecs->createEntity();
+    std::vector<Vec2f> pentagonPoints = makePolygon(Vec2f(600.0f, 100.0f), 50.0f, 5, 0.0f);
+    setupRigidBody(pentagon, ecs, pentagonPoints, 1.0f, sf::Color::Blue, false);
+
 
     // Game loop
     sf::Clock clock;
