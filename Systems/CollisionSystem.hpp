@@ -32,6 +32,8 @@ public:
                     Mass& massA = ecs->getData<Mass>(entityA);
                     Mass& massB = ecs->getData<Mass>(entityB);
 
+                    if (massA.m == 0.0f && massB.m == 0.0f) continue; // both are static, no collision
+
                     PredictedPosition& positionA = ecs->getData<PredictedPosition>(entityA);
                     PredictedPosition& positionB = ecs->getData<PredictedPosition>(entityB);
                     std::vector<Vec2f>& polygonA = positionA.predictedPositions;

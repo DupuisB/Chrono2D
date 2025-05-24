@@ -49,11 +49,11 @@ int main() {
     setupRigidBody(someRect, ecs, someRectPoints, 0.0f, sf::Color::Red, true);
 
     Entity leftWall = ecs->createEntity();
-    std::vector<Vec2f> leftWallPoints = makeRect(Vec2f(0.0f, 0.0f), 50.0f, 490.0f);
+    std::vector<Vec2f> leftWallPoints = makeRect(Vec2f(0.0f, 0.0f), 50.0f, 510.0f);
     setupRigidBody(leftWall, ecs, leftWallPoints, 0.0f, sf::Color::Red, true);
 
     Entity rightWall = ecs->createEntity();
-    std::vector<Vec2f> rightWallPoints = makeRect(Vec2f(750.0f, 0.0f), 50.0f, 499.0f);
+    std::vector<Vec2f> rightWallPoints = makeRect(Vec2f(750.0f, 0.0f), 50.0f, 510.0f);
     setupRigidBody(rightWall, ecs, rightWallPoints, 0.0f, sf::Color::Red, true);
 
     Entity player = ecs->createEntity();
@@ -80,7 +80,6 @@ int main() {
     // Game loop
     sf::Clock clock;
     while (window.isOpen()) {
-        // Handle events using SFML 3.0 style event polling
         std::optional<sf::Event> eventOpt;
         while ((eventOpt = window.pollEvent())) {
             const sf::Event& event = *eventOpt;
