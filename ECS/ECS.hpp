@@ -51,6 +51,12 @@ public:
         componentArray->add(entity, component);
     }
 
+    template <typename T>
+    void removeComponent(Entity entity, T component) {
+        auto componentArray = getComponentArray<T>();
+        componentArray->remove(entity);
+    }
+
     // returns data of the component
     // for the given entity
     template <typename T>

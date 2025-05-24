@@ -73,5 +73,16 @@ struct RenderablePolygon{
     RenderablePolygon(const sf::Color& c) : color(c) {}
 };
 
+struct ControlledEntity{
+    sf::Color color;
+    ControlledEntity() : color(sf::Color::Cyan) {}
+};
+
+struct InitialPosition{
+    std::vector<Vec2f> initialPositions;
+    InitialPosition() : initialPositions() {}
+    InitialPosition(const std::vector<Vec2f>& pos) : initialPositions(pos) {}
+};
+
 
 #endif // COMPONENTS_HPP

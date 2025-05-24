@@ -8,47 +8,18 @@
 #include "Systems/CollisionSystem.hpp"
 #include "Systems/RenderSystem.hpp"
 #include "Systems/ConstraintSystem.hpp"
+#include "Systems/KeyEventSystem.hpp"
+
+const float PI = 3.14159265358979323846f;
 
 bool paused = false;
 
 const float TIME_STEP = 10.0f;
 const float TICK = 0.01f;
 
-// helper function returns vector of points after creating a rect
-void createRect(const Vec2f& pos, const Vec2f& size, sf::Color color, std::shared_ptr<ECS> ecs, Entity& entity, bool isStatic) {
-    std::vector<Vec2f> points;
-    std::vector<Vec2f> zeros = {Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0), Vec2f(0, 0)};
-    points.push_back(pos);
-    points.push_back(pos + Vec2f(size.x, 0));
-    points.push_back(pos + size);
-    points.push_back(pos + Vec2f(0, size.y));
-    float mass = isStatic ? 0.0f : 1.0f;
-    ecs->addComponent<Mass>(entity, Mass(mass));
-    ecs->addComponent<Position>(entity, Position(points));
-    ecs->addComponent<PredictedPosition>(entity, PredictedPosition(points));
-    if (!isStatic) {
-        ecs->addComponent<Velocity>(entity, Velocity(zeros));
-        ecs->addComponent<Acceleration>(entity, Acceleration(zeros));
-        std::vector<float> constraints;
-        std::vector<std::array<int, 2>> edges;
-        for (int i = 0; i < points.size(); i++) {
-            constraints.push_back((points[(i+1) % points.size()] - points[i]).length());
-            std::array<int, 2> edge;
-            if (i == points.size() - 1) {
-                edge = {i, 0};
-            } else {
-                edge = {i, i+1};
-            }
-            edges.push_back(edge);
-        }
-        constraints.push_back((points[0] - points[2]).length());
-        constraints.push_back((points[1] - points[3]).length());
-        edges.push_back({0, 2});
-        edges.push_back({1, 3});
-        ecs->addComponent<PolygonConstraint>(entity, PolygonConstraint(constraints, edges));
-    }
-    ecs->addComponent<RenderablePolygon>(entity, RenderablePolygon(color));
-}
+std::vector<Vec2f> makePolygon(const Vec2f center, const float size, const int num_sides, float angle=0.0f);
+std::vector<Vec2f> makeRect(const Vec2f topLeft, float width, float height, float angle = 0.0f);
+void setupRigidBody(Entity& entity, std::shared_ptr<ECS> ecs, const std::vector<Vec2f>& points, float mass, const sf::Color& color, bool isStatic);
 
 // Main function to demonstrate our ECS system with a cube falling onto a ground line
 int main() {
@@ -65,36 +36,25 @@ int main() {
     CollisionSystem collisionSystem(ecs);
     ConstraintSystem constraintSystem(ecs);
     RenderSystem renderSystem(ecs, &window);
+    KeyEventSystem keyEventSystem(ecs, &window, paused);
 
     // Create ground entity
     Entity ground = ecs->createEntity();
     // Create a static ground rectangle
-    createRect(Vec2f(0.0f, 500.0f), Vec2f(800.0f, 100.0f), sf::Color::Red, ecs, ground, true);
-
-    // static cube rotated 45 degrees
-    Vec2f pointA = Vec2f(100.0f, 300.0f);
-    Vec2f pointB = Vec2f(150.0f, 350.0f);
-    Vec2f pointC = Vec2f(100.0f, 400.0f);
-    Vec2f pointD = Vec2f(50.0f, 350.0f);
-
-    // Create a static cube entity
-    Entity staticCube = ecs->createEntity();
-    ecs->addComponent<Mass>(staticCube, Mass(0.0f));
-    ecs->addComponent<Position>(staticCube, Position({pointA, pointB, pointC, pointD}));
-    ecs->addComponent<PredictedPosition>(staticCube, PredictedPosition({pointA, pointB, pointC, pointD}));
-    ecs->addComponent<RenderablePolygon>(staticCube, RenderablePolygon(sf::Color::Green));
-    
+    std::vector<Vec2f> groundPoints = makeRect(Vec2f(0.0f, 500.0f), 800.0f, 50.0f);
+    setupRigidBody(ground, ecs, groundPoints, 0.0f, sf::Color::Red, true);
 
     // Create A point in the square (left top)
     Entity player = ecs->createEntity();
     // Create a dynamic cube entity
-    createRect(Vec2f(50.0f, 100.0f), Vec2f(50.0f, 50.0f), sf::Color::Blue, ecs, player, false);
+    std::vector<Vec2f> cubePoints = makePolygon(Vec2f(400.0f, 100.0f), 50.0f, 4, 0.0f);
+    ecs->addComponent<ControlledEntity>(player, ControlledEntity());
+    keyEventSystem.updateControlledEntity();
+    setupRigidBody(player, ecs, cubePoints, 1.0f, sf::Color::Blue, false);
 
     Entity dynRect = ecs->createEntity();
-    createRect(Vec2f(150.0f, 100.0f), Vec2f(100.0f, 100.0f), sf::Color::Blue, ecs, dynRect, false);
-    // change the mass of the dynamic rectangle
-    Mass& mass = ecs->getData<Mass>(dynRect);
-    mass.m = 1.0f;
+    std::vector<Vec2f> rectPoints = makePolygon(Vec2f(150.0f, 100.0f), 100.0f, 4, 0.0f);
+    setupRigidBody(dynRect, ecs, rectPoints, 1.0f, sf::Color::Blue, false);
 
     // Game loop
     sf::Clock clock;
@@ -103,86 +63,16 @@ int main() {
         std::optional<sf::Event> eventOpt;
         while ((eventOpt = window.pollEvent())) {
             const sf::Event& event = *eventOpt;
-            
-            // Check event type
             if (event.is<sf::Event::Closed>()) {
                 window.close();
             }
-            
-            // Reset cube position on spacebar press
             if (event.is<sf::Event::KeyPressed>()) {
-                const auto& keyEvent = event.getIf<sf::Event::KeyPressed>();
-                if (keyEvent && keyEvent->code == sf::Keyboard::Key::Space) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    for (int i=0; i<4; i++) {
-                        playerData.velocities[i] += Vec2f(0.0f, -30.0f);
-                    }
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Right) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    for (int i=0; i<4; i++) {
-                        playerData.velocities[i].x = 30.0f;
-                    }
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Left) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    for (int i=0; i<4; i++) {
-                        playerData.velocities[i].x = -30.0f;
-                    }
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::S) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    for (int i=0; i<4; i++) {
-                        playerData.velocities[i].x = 0.0f;
-                    }
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::Down) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    for (int i=0; i<4; i++) {
-                        playerData.velocities[i].y = 30.0f;
-                    }
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::R) {
-                    // reset cube position
-                    Position& playerPosition = ecs->getData<Position>(player);
-                    PredictedPosition& playerPredictedPosition = ecs->getData<PredictedPosition>(player);
-                    Velocity& playerVelocity = ecs->getData<Velocity>(player);
-                    playerPosition.positions[0] = Vec2f(50.0f, 100.0f);
-                    playerPosition.positions[1] = Vec2f(100.0f, 100.0f);
-                    playerPosition.positions[2] = Vec2f(100.0f, 150.0f);
-                    playerPosition.positions[3] = Vec2f(50.0f, 150.0f);
-                    playerPredictedPosition.predictedPositions[0] = Vec2f(50.0f, 100.0f);
-                    playerPredictedPosition.predictedPositions[1] = Vec2f(100.0f, 100.0f);
-                    playerPredictedPosition.predictedPositions[2] = Vec2f(100.0f, 150.0f);
-                    playerPredictedPosition.predictedPositions[3] = Vec2f(50.0f, 150.0f);
-                    playerVelocity.velocities[0] = Vec2f(0.0f, 0.0f);
-                    playerVelocity.velocities[1] = Vec2f(0.0f, 0.0f);
-                    playerVelocity.velocities[2] = Vec2f(0.0f, 0.0f);
-                    playerVelocity.velocities[3] = Vec2f(0.0f, 0.0f);
-                    // reset the dynamic cube too
-                    Position& dynRectPosition = ecs->getData<Position>(dynRect);
-                    PredictedPosition& dynRectPredictedPosition = ecs->getData<PredictedPosition>(dynRect);
-                    Velocity& dynRectVelocity = ecs->getData<Velocity>(dynRect);
-                    dynRectPosition.positions[0] = Vec2f(150.0f, 100.0f);
-                    dynRectPosition.positions[1] = Vec2f(250.0f, 100.0f);
-                    dynRectPosition.positions[2] = Vec2f(250.0f, 200.0f);
-                    dynRectPosition.positions[3] = Vec2f(150.0f, 200.0f);
-                    dynRectPredictedPosition.predictedPositions[0] = Vec2f(150.0f, 100.0f);
-                    dynRectPredictedPosition.predictedPositions[1] = Vec2f(250.0f, 100.0f);
-                    dynRectPredictedPosition.predictedPositions[2] = Vec2f(250.0f, 200.0f);
-                    dynRectPredictedPosition.predictedPositions[3] = Vec2f(150.0f, 200.0f);
-                    dynRectVelocity.velocities[0] = Vec2f(0.0f, 0.0f);
-                    dynRectVelocity.velocities[1] = Vec2f(0.0f, 0.0f);
-                    dynRectVelocity.velocities[2] = Vec2f(0.0f, 0.0f);
-                    dynRectVelocity.velocities[3] = Vec2f(0.0f, 0.0f);
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::P) {
-                    // Pause the simulation
-                    paused = !paused;
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::E) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    playerData.velocities[1] = Vec2f(0.0f, -15.0f);
-                } else if (keyEvent && keyEvent->code == sf::Keyboard::Key::A) {
-                    Velocity& playerData = ecs->getData<Velocity>(player);
-                    playerData.velocities[0] = Vec2f(0.0f, -15.0f);
+                const sf::Event::KeyPressed* keyEventOpt = event.getIf<sf::Event::KeyPressed>();
+                if (keyEventOpt) {
+                    keyEventSystem.handleKeyPressedEvent(keyEventOpt);
                 }
             }
         }
-
 
         if (!paused) {
             // Update systems
@@ -198,3 +88,75 @@ int main() {
 
     return 0;
 }
+
+// Function to create a polygon with a given center, size, number of sides, and angle
+// where size is the distance from the center to any vertex
+std::vector<Vec2f> makePolygon(const Vec2f center, const float size, const int num_sides, float angle) {
+    std::vector<Vec2f> points;
+    float rotation = angle * (PI / 180.0f);
+
+    for (int i = 0; i < num_sides; i++) {
+        float theta = -2.0f * PI * i / num_sides + rotation;
+        float x = center.x + size * std::cos(theta);
+        float y = center.y + size * std::sin(theta);
+        points.emplace_back(x, y);
+    }
+
+    return points;
+}
+
+std::vector<Vec2f> makeRect(const Vec2f topLeft, float width, float height, float angle) {
+    std::vector<Vec2f> points;
+    points.emplace_back(topLeft);
+    points.emplace_back(topLeft.x + width, topLeft.y);
+    points.emplace_back(topLeft.x + width, topLeft.y + height);
+    points.emplace_back(topLeft.x, topLeft.y + height);
+    // rotate by angle degrees around the center of the rectangle
+    if (angle != 0.0f) {
+        float rotation = angle * (PI / 180.0f);
+        Vec2f center = Vec2f(topLeft.x + width / 2.0f, topLeft.y + height / 2.0f);
+        for (auto& point : points) {
+            float x = center.x + (point.x - center.x) * std::cos(rotation) - (point.y - center.y) * std::sin(rotation);
+            float y = center.y + (point.x - center.x) * std::sin(rotation) + (point.y - center.y) * std::cos(rotation);
+            point = Vec2f(x, y);
+        }
+    }
+    return points;
+}
+
+PolygonConstraint generateConstraints(const std::vector<Vec2f>& points) {
+    std::vector<float> constraints;
+    std::vector<std::array<int, 2>> edges;
+    Vec2f center = Vec2f(0, 0);
+    for (const auto& p : points) {
+        center += p;
+    }
+    center /= static_cast<float>(points.size());
+    float edgeToEdge = (points[0] - points[1]).length();
+    float centerToEdge = (points[0] - center).length();
+    for (int i = 0; i < points.size(); i++) {
+        for (int j = i + 1; j < points.size(); j++) {
+            constraints.push_back((points[i] - points[j]).length());
+            std::array<int, 2> edge;
+            edge = {i, j};
+            edges.push_back(edge);
+        }
+    }
+    return PolygonConstraint(constraints, edges);
+}
+
+void setupRigidBody(Entity& entity, std::shared_ptr<ECS> ecs, const std::vector<Vec2f>& points, float mass, const sf::Color& color, bool isStatic) {
+    ecs->addComponent<Mass>(entity, Mass(mass));
+    ecs->addComponent<Position>(entity, Position(points));
+    ecs->addComponent<PredictedPosition>(entity, PredictedPosition(points));
+    if (!isStatic) {
+        ecs->addComponent<InitialPosition>(entity, InitialPosition(points));
+        std::vector<Vec2f> zeros(points.size(), Vec2f(0, 0));
+        ecs->addComponent<Velocity>(entity, Velocity(zeros));
+        ecs->addComponent<Acceleration>(entity, Acceleration(zeros));
+        PolygonConstraint constraints = generateConstraints(points);
+        ecs->addComponent<PolygonConstraint>(entity, constraints);
+    }
+    ecs->addComponent<RenderablePolygon>(entity, RenderablePolygon(color));
+}
+    

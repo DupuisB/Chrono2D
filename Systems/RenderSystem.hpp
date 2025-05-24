@@ -45,15 +45,22 @@ public:
         RenderablePolygon& renderData = ecs->getData<RenderablePolygon>(entity);
         Position& position = ecs->getData<Position>(entity);
 
+        sf::Color color = renderData.color;
+
+        if (ecs->hasComponent<ControlledEntity>(entity)) {
+            ControlledEntity& controlled = ecs->getData<ControlledEntity>(entity);
+            color = controlled.color;
+        }
+
         std::vector<Vec2f> positions = position.positions;
 
         sf::VertexArray lines(sf::PrimitiveType::LineStrip, positions.size() + 1);
         for (size_t i = 0; i < positions.size(); i++) {
             lines[i].position = sf::Vector2f(positions[i].x, positions[i].y);
-            lines[i].color = renderData.color;
+            lines[i].color = color;
         }
         lines[positions.size()].position = sf::Vector2f(positions[0].x, positions[0].y);
-        lines[positions.size()].color = renderData.color;
+        lines[positions.size()].color = color;
         window->draw(lines);
     }
 
