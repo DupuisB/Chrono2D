@@ -17,7 +17,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
 
     if (B2_IS_NULL(playerBodyId)) return;
 
-    // --- Player Physics Parameters (Inspired by Game Maker's Toolkit article) ---
+    // --- Player Physics Parameters ---
     // Horizontal Movement
     static const float PLAYER_MAX_SPEED = 20.0f;
     static const float PLAYER_GROUND_ACCELERATION = 100.0f;
@@ -39,13 +39,16 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
     static const float PLAYER_INITIAL_JUMP_VELOCITY = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE * PLAYER_TIME_TO_JUMP_APEX;
     static const float PLAYER_BASE_GRAVITY_SCALE = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE / WORLD_GRAVITY_MAGNITUDE;
 
+    static const float PLAYER_COYOTE_TIME = 0.5f;
+    static const float PLAYER_JUMP_BUFFER_TIME = 0.1f;
 
-    // --- Player State Variables (some are persistent across calls) ---
+
+    // --- Player State Variables ---
     static bool isGrounded = false;
     static bool wasGroundedLastFrame = false;
-    static bool isJumping = false; // True if player is in the upward or controlled downward phase of a jump
-    static float coyoteTimer = 0.5f;
-    static float jumpBufferTimer = 0.5f;
+    static bool isJumping = false;
+    static float coyoteTimer = PLAYER_COYOTE_TIME;
+    static float jumpBufferTimer = PLAYER_JUMP_BUFFER_TIME;
     static bool previousJumpKeyHeld = false;
 
     // --- Input Processing ---
@@ -81,7 +84,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
                     if (gameObject.canJumpOn && supportingNormalY > 0.7f) { // Check if contact normal is mostly upward
                         isGrounded = true;
                     }
-                    break; // Found the GameObject
+                    break;
                 }
             }
             if (isGrounded) break;
@@ -90,8 +93,8 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
 
     // Update Coyote Time & Jump State
     if (isGrounded) {
-        coyoteTimer = 0.1f; // coyoteTimeThreshold
-        if (isJumping) { // Landed
+        coyoteTimer = PLAYER_COYOTE_TIME;
+        if (isJumping) {
              isJumping = false;
         }
     } else {
@@ -100,7 +103,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
 
     // Update Jump Buffer
     if (jumpKeyJustPressed) {
-        jumpBufferTimer = 0.1f; // jumpBufferThreshold
+        jumpBufferTimer = PLAYER_JUMP_BUFFER_TIME;
     } else {
         jumpBufferTimer = std::max(0.0f, jumpBufferTimer - dt);
     }
@@ -115,25 +118,22 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
         b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
         b2Body_SetLinearVelocity(playerBodyId, {currentVel.x, PLAYER_INITIAL_JUMP_VELOCITY});
         isJumping = true;
-        jumpBufferTimer = 0.0f; // Consume buffer
-        coyoteTimer = 0.0f;     // Consume coyote time
-        isGrounded = false;     // No longer grounded once jump starts
+        jumpBufferTimer = 0.0f;
+        coyoteTimer = 0.0f;
+        isGrounded = false;
     }
 
     // --- Gravity Modification ---
     b2Vec2 playerVel = b2Body_GetLinearVelocity(playerBodyId);
     float currentGravityScale = PLAYER_BASE_GRAVITY_SCALE;
 
-    if (isJumping && playerVel.y > 0.01f && !jumpKeyHeld) { // Jump cut: key released while moving up
+    if (isJumping && playerVel.y > 0.01f && !jumpKeyHeld) {
         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE * PLAYER_JUMP_CUT_GRAVITY_FACTOR;
-    } else if (playerVel.y < -0.01f) { // Falling
+    } else if (playerVel.y < -0.01f) {
         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE * PLAYER_FALL_GRAVITY_FACTOR;
     }
-    // If on ground and not jumping, or at apex, PLAYER_BASE_GRAVITY_SCALE applies.
-    // If isJumping is false (e.g. walked off ledge), fall gravity applies.
-    if (isGrounded && !isJumping) { // Ensure normal gravity when standing on ground
-         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE; // Or 1.0f if PLAYER_BASE_GRAVITY_SCALE is only for jump arc
-                                                          // Let's stick to PLAYER_BASE_GRAVITY_SCALE for consistency
+    if (isGrounded && !isJumping) {
+         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE; 
     }
 
 
@@ -154,22 +154,18 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
             accelRate *= PLAYER_TURN_SPEED_FACTOR;
         }
 
-        // Only apply force if not exceeding max speed in the direction of movement,
-        // or if trying to move against current velocity (turning/slowing down towards opposite max speed)
         if ((direction > 0 && currentVelX < PLAYER_MAX_SPEED) || (direction < 0 && currentVelX > -PLAYER_MAX_SPEED)) {
              forceX = direction * accelRate * playerMass;
         }
-        // If at max speed and still pressing in that direction, no acceleration force.
-        // If trying to accelerate further but already at max speed, Box2D friction/damping will handle it.
 
-    } else { // No horizontal input: apply deceleration if on ground
+    } else {
         if (isGrounded && std::abs(currentVelX) > 0.01f) {
             float decelForceMagnitude = PLAYER_GROUND_DECELERATION * playerMass;
             forceX = -sign(currentVelX) * decelForceMagnitude;
 
             // Prevent deceleration from overshooting and reversing direction in a single frame
             if (std::abs(forceX * dt / playerMass) > std::abs(currentVelX)) {
-                forceX = -currentVelX * playerMass / dt; // Force to stop in one frame
+                forceX = -currentVelX * playerMass / dt;
             }
         }
     }
@@ -177,12 +173,4 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
     if (forceX != 0.0f) {
         b2Body_ApplyForceToCenter(playerBodyId, {forceX, 0.0f}, true);
     }
-    
-    // Final velocity clamping (optional, forces should ideally respect max speed, but this is a hard clamp)
-    // playerVel = b2Body_GetLinearVelocity(playerBodyId); // Get updated velocity if forces applied
-    // float clampedVelX = std::max(-PLAYER_MAX_SPEED, std::min(playerVel.x, PLAYER_MAX_SPEED));
-    // if (std::abs(playerVel.x - clampedVelX) > 0.01f) { // Only set if different to avoid waking body
-    //    b2Body_SetLinearVelocity(playerBodyId, {clampedVelX, playerVel.y});
-    // }
-    // For now, let forces and damping manage speed, avoid direct velocity setting for horizontal if possible.
 }
