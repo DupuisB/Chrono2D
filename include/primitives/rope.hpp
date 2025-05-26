@@ -26,6 +26,8 @@
  * @param segmentDensity Density for segments (default: 0.05f).
  * @param segmentFriction Friction for segments (default: 0.5f).
  * @param segmentRestitution Restitution for segments (default: 0.1f).
+ * @param segmentsCanBeJumpedOn Can player jump on these rope segments? (default: false)
+ * @param segmentsCollideWithPlayer Should player collide with these rope segments? (default: true)
  * @return True if the rope was created successfully, false otherwise.
  */
 inline bool createSegmentedRope(
@@ -41,7 +43,9 @@ inline bool createSegmentedRope(
     float segmentLinearDamping = 0.2f,
     float segmentDensity = 0.05f,
     float segmentFriction = 0.5f,
-    float segmentRestitution = 0.1f) {
+    float segmentRestitution = 0.1f,
+    bool segmentsCanBeJumpedOn = false, 
+    bool segmentsCollideWithPlayer = true) {
 
     if (B2_IS_NULL(bodyA) || B2_IS_NULL(bodyB) || numSegments < 1) {
         std::cerr << "Error: Invalid parameters for createSegmentedRope." << std::endl;
@@ -103,7 +107,8 @@ inline bool createSegmentedRope(
         if (segmentObj.init(worldId, segmentCenterPos.x, segmentCenterPos.y,
                             segWidth, segHeight,
                             true, color, false, // isDynamic, no fixed rotation
-                            segmentLinearDamping, segmentDensity, segmentFriction, segmentRestitution)) {
+                            segmentLinearDamping, segmentDensity, segmentFriction, segmentRestitution,
+                            false, segmentsCanBeJumpedOn, segmentsCollideWithPlayer)) { // isPlayerObject=false
             gameObjects.push_back(segmentObj);
             b2BodyId currentSegmentBodyId = segmentObj.bodyId;
 

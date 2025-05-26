@@ -21,7 +21,9 @@
  * @param density Density (default: 1.0f).
  * @param friction Friction (default: 0.7f).
  * @param restitution Restitution (default: 0.1f).
- * @param groundPlatformIds Optional: Pointer to a vector to add this object's bodyId if it's considered ground.
+ * @param isPlayerObject Is this rectangle the player object? (default: false).
+ * @param canJumpOn Can the player jump on this rectangle? (default: false for static, true for dynamic, but should be explicit).
+ * @param doPlayerCollide Should the player collide with this rectangle? (default: true).
  * @return b2BodyId of the created rectangle, or b2_nullBodyId on failure.
  */
 inline b2BodyId createRectangle(
@@ -31,15 +33,13 @@ inline b2BodyId createRectangle(
     bool isDynamic, sf::Color color,
     bool fixedRotation = false, float linearDamping = 0.0f,
     float density = 1.0f, float friction = 0.7f, float restitution = 0.1f,
-    std::vector<b2BodyId>* groundPlatformIds = nullptr) {
+    bool isPlayerObject = false, bool canJumpOn = false, bool doPlayerCollide = true) {
     
     GameObject rectObj;
     if (rectObj.init(worldId, x_m, y_m, width_m, height_m, isDynamic, color,
-                     fixedRotation, linearDamping, density, friction, restitution)) {
+                     fixedRotation, linearDamping, density, friction, restitution,
+                     isPlayerObject, canJumpOn, doPlayerCollide)) {
         gameObjects.push_back(rectObj);
-        if (groundPlatformIds) {
-            groundPlatformIds->push_back(rectObj.bodyId);
-        }
         return rectObj.bodyId;
     }
     return b2_nullBodyId;

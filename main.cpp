@@ -1,18 +1,11 @@
 #include <SFML/Graphics.hpp>
 #include <box2d/box2d.h>
 
-#include "include/game_object.hpp" // Includes utils.hpp and constants.hpp
+#include "include/game_object.hpp"
 #include "include/player.hpp"
+
 // --- Map Loading ---
-// Conditional compilation to include the selected map file.
-#if SELECTED_MAP == 1
-#include "maps/map1.hpp"
-#else
-// Placeholder for other maps or a default map.
-// #include "maps/default_map.hpp"
-#pragma message("Warning: No map selected or SELECTED_MAP value not recognized. Defaulting to no map objects.")
-#endif
-// --- End Map Loading ---
+#include "maps/map1.hpp" // Change this to load different maps
 
 #include <vector>
 #include <cmath> 
@@ -44,37 +37,12 @@ int main() {
     }
 
     std::vector<GameObject> gameObjects; // Stores all game objects
-    std::vector<b2BodyId> groundPlatformIds; // IDs of bodies considered as ground for contact checks
     b2BodyId playerBodyId = b2_nullBodyId; // ID of the player's body
 
     // --- Load Map Objects ---
     // Populates gameObjects, playerBodyId, and groundPlatformIds based on the selected map.
-#if SELECTED_MAP == 1
-    loadMap1(worldId, gameObjects, playerBodyId, groundPlatformIds);
-#else
-    // Si aucune carte n'est sélectionnée, créer un joueur par défaut
-    b2Vec2 playerSize = {1.0f, 2.0f};
-    b2Vec2 playerPosition = {5.0f, 5.0f};
-    playerBodyId = createPlayer(worldId, playerPosition, playerSize);
-    
-    // Ajouter le joueur aux objets de jeu
-    GameObject playerObject(playerBodyId, sf::Color::Blue);
-    gameObjects.push_back(playerObject);
-    
-    // Créer une plateforme de sol simple
-    b2BodyDef groundBodyDef = b2DefaultBodyDef();
-    groundBodyDef.position = {0.0f, 0.0f};
-    b2BodyId groundBodyId = b2CreateBody(worldId, &groundBodyDef);
-    groundPlatformIds.push_back(groundBodyId);
-    
-    b2Polygon groundBox;
-    b2Polygon_SetAsBox(&groundBox, 20.0f, 0.5f, {0.0f, -2.0f}, 0.0f);
-    b2ShapeDef shapeDef = b2DefaultShapeDef();
-    b2CreatePolygonShape(groundBodyId, &shapeDef, &groundBox);
-    
-    GameObject groundObject(groundBodyId, sf::Color::Green);
-    gameObjects.push_back(groundObject);
-#endif
+    loadMap1(worldId, gameObjects, playerBodyId);
+
     // --- End Load Map Objects ---
 
     // --- Game Loop Variables ---
@@ -104,7 +72,7 @@ int main() {
 
         // --- Player Movement ---
         // Utilise la fonction movePlayer de player.cpp au lieu de duplicer la logique
-        movePlayer(worldId, playerBodyId, groundPlatformIds, jumpKeyHeld, 
+        movePlayer(worldId, playerBodyId, gameObjects, jumpKeyHeld,
                   wantsToMoveLeft, wantsToMoveRight, dt);
 
         // --- Box2D Physics Step ---

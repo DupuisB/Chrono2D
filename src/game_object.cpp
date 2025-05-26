@@ -1,4 +1,4 @@
-#include "game_object.hpp" // Includes SFML, Box2D, utils.hpp
+#include "game_object.hpp" // Includes SFML, Box2D, utils.hpp, constants.hpp
 #include <iostream> // For error reporting
 #include <cmath> // For M_PI / b2_pi
 
@@ -6,7 +6,7 @@
  * @brief Default constructor for GameObject.
  * Initializes bodyId and shapeId to null and hasVisual to false.
  */
-GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVisual(false) {}
+GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVisual(false), canJumpOn(false) {}
 
 /**
  * @brief Initializes the GameObject with a physical body and visual representation.
@@ -22,13 +22,19 @@ GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVi
  * @param density Density of the body's material.
  * @param friction Friction coefficient of the body's material.
  * @param restitution Restitution (bounciness) of the body's material.
+ * @param isPlayerObject True if this game object represents the player.
+ * @param canJumpOnObject True if the player can jump from this object.
+ * @param doPlayerCollideWithObject True if the player should collide with this object.
  * @return True if initialization was successful, false otherwise.
  */
 bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, float height_m,
                       bool isDynamic, sf::Color color,
                       bool fixedRotation, float linearDamping,
-                      float density, float friction, float restitution) {
+                      float density, float friction, float restitution,
+                      bool isPlayerObject, bool canJumpOnObject, bool doPlayerCollideWithObject) {
     hasVisual = true;
+    this->canJumpOn = canJumpOnObject; // Store the canJumpOn status
+
     sfShape.setSize({metersToPixels(width_m), metersToPixels(height_m)});
     sfShape.setFillColor(color);
     sfShape.setOrigin({metersToPixels(width_m) / 2.0f, metersToPixels(height_m) / 2.0f});
@@ -55,6 +61,19 @@ bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, fl
     shapeDef.density = isDynamic ? density : 0.0f; // Static bodies should have zero density
     shapeDef.material.friction = friction;
     shapeDef.material.restitution = restitution;
+
+    // Setup collision filtering
+    if (isPlayerObject) {
+        shapeDef.filter.categoryBits = CATEGORY_PLAYER;
+        shapeDef.filter.maskBits = CATEGORY_WORLD; // Player collides with world objects
+    } else {
+        shapeDef.filter.categoryBits = CATEGORY_WORLD;
+        if (doPlayerCollideWithObject) {
+            shapeDef.filter.maskBits = CATEGORY_PLAYER | CATEGORY_WORLD; // World object collides with player and other world objects
+        } else {
+            shapeDef.filter.maskBits = CATEGORY_WORLD; // World object collides only with other world objects
+        }
+    }
 
     shapeId = b2CreatePolygonShape(bodyId, &shapeDef, &box);
     if (B2_IS_NULL(shapeId)) {

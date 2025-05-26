@@ -14,6 +14,8 @@ public:
     b2ShapeId shapeId;      ///< ID of the Box2D shape attached to the body.
     sf::RectangleShape sfShape; ///< SFML shape for visual representation.
     bool hasVisual;         ///< Flag indicating if the object has a visual component.
+    bool canJumpOn;       ///< Flag indicating if the player can jump off this object.
+    // bool doPlayerCollide; ///< This is implicitly handled by collision filtering setup.
 
     /**
      * @brief Default constructor.
@@ -23,6 +25,7 @@ public:
     /**
      * @brief Initializes the GameObject.
      * Creates a Box2D body and shape, and sets up the SFML visual component.
+     * Also configures collision filtering and jump properties.
      * @param worldId The Box2D world ID.
      * @param x_m Initial x-position in meters.
      * @param y_m Initial y-position in meters.
@@ -35,12 +38,16 @@ public:
      * @param density Density of the body's material (default: 1.0f).
      * @param friction Friction coefficient (default: 0.7f).
      * @param restitution Restitution (bounciness) coefficient (default: 0.1f).
+     * @param isPlayerObject True if this game object represents the player.
+     * @param canJumpOnObject True if the player can jump from this object.
+     * @param doPlayerCollideWithObject True if the player should collide with this object.
      * @return True if initialization was successful, false otherwise.
      */
     bool init(b2WorldId worldId, float x_m, float y_m, float width_m, float height_m,
               bool isDynamic, sf::Color color,
               bool fixedRotation = false, float linearDamping = 0.0f,
-              float density = 1.0f, float friction = 0.7f, float restitution = 0.1f);
+              float density = 1.0f, float friction = 0.7f, float restitution = 0.1f,
+              bool isPlayerObject = false, bool canJumpOnObject = false, bool doPlayerCollideWithObject = true);
 
     /**
      * @brief Updates the SFML shape's position and rotation from the Box2D body.

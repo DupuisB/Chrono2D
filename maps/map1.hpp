@@ -17,12 +17,10 @@
  * @param worldId The ID of the Box2D world.
  * @param gameObjects A reference to the vector that will store all created GameObjects.
  * @param playerBodyId A reference to store the b2BodyId of the created player object.
- * @param groundPlatformIds A reference to the vector that will store the b2BodyIds of objects considered as ground.
  */
 inline void loadMap1(b2WorldId worldId,
                      std::vector<GameObject>& gameObjects,
-                     b2BodyId& playerBodyId, // Pass by reference to update player's body ID
-                     std::vector<b2BodyId>& groundPlatformIds) { // Pass by reference to populate
+                     b2BodyId& playerBodyId) { // Pass by reference to update player's body ID
 
     // Ensure playerBodyId is initialized to null before attempting to create the player.
     playerBodyId = b2_nullBodyId;
@@ -33,7 +31,8 @@ inline void loadMap1(b2WorldId worldId,
     float groundXM = groundWidthM / 2.0f;
     float groundYM = groundHeightM / 2.0f;
     createRectangle(worldId, gameObjects, groundXM, groundYM, groundWidthM, groundHeightM,
-                    false, sf::Color::Green, false, 0.0f, 1.0f, 0.7f, 0.1f, &groundPlatformIds);
+                    false, sf::Color::Green, false, 0.0f, 1.0f, 0.7f, 0.1f,
+                    false, true, true); // isPlayer=false, canJumpOn=true, doPlayerCollide=true
 
     // Player
     float playerWidthM = pixelsToMeters(30);
@@ -41,14 +40,17 @@ inline void loadMap1(b2WorldId worldId,
     float playerXM = pixelsToMeters(100);
     float playerYM = pixelsToMeters(300);
     playerBodyId = createRectangle(worldId, gameObjects, playerXM, playerYM, playerWidthM, playerHeightM,
-                                   true, sf::Color::Blue, true, 0.0f, 1.0f, 0.7f, 0.0f);
+                                   true, sf::Color::Blue, true, 0.0f, 1.0f, 0.7f, 0.0f,
+                                   true, false, true); // isPlayer=true, canJumpOn=false (player can't jump on itself), doPlayerCollide=true (player collides with world)
+
 
     // Pushable Box
     float boxSizeM = pixelsToMeters(40);
     float boxXM = pixelsToMeters(400);
     float boxYM = groundYM + groundHeightM / 2.0f + boxSizeM / 2.0f + pixelsToMeters(1); // Position slightly above ground
     createRectangle(worldId, gameObjects, boxXM, boxYM, boxSizeM, boxSizeM,
-                    true, sf::Color::Red, false, 0.2f, 1.0f, 0.7f, 0.1f, &groundPlatformIds);
+                    true, sf::Color::Red, false, 0.2f, 1.0f, 0.7f, 0.1f,
+                    false, true, true); // isPlayer=false, canJumpOn=true, doPlayerCollide=true
 
 
     // --- Hanging Platform ---
@@ -62,7 +64,8 @@ inline void loadMap1(b2WorldId worldId,
     float platY_m = anchorY_m - pixelsToMeters(150); // Position platform below the anchor
     
     b2BodyId platformBodyId = createRectangle(worldId, gameObjects, platX_m, platY_m, platWidthM, platHeightM,
-                                             true, sf::Color(160, 82, 45), false, 0.5f, 1.0f, 0.7f, 0.1f, &groundPlatformIds);
+                                             true, sf::Color(160, 82, 45), false, 0.5f, 1.0f, 0.7f, 0.1f,
+                                             false, true, true); // isPlayer=false, canJumpOn=true, doPlayerCollide=true
 
     if (!B2_IS_NULL(platformBodyId)) {
         b2MassData myMassData;
@@ -87,7 +90,8 @@ inline void loadMap1(b2WorldId worldId,
                             segmentThicknessM,
                             true, // isVerticalOrientation
                             sf::Color(139, 69, 19),
-                            0.2f, 0.05f, 0.5f, 0.1f); // damping, density, friction, restitution
+                            0.2f, 0.05f, 0.5f, 0.1f,
+                            false, false); // segmentsCanBeJumpedOn=false, segmentsCollideWithPlayer=true
     }
     // --- End Segmented Rope Creation for Hanging Platform ---
     
@@ -110,7 +114,8 @@ inline void loadMap1(b2WorldId worldId,
                             hSegmentThickness,
                             false, // isVerticalOrientation = false for horizontal bridge
                             sf::Color::Yellow,
-                            1.0f, 1.0f, 0.0f, 1.0f); // damping, density, friction, restitution
+                            1.0f, 1.0f, 0.0f, 1.0f,
+                            true, true); // segmentsCanBeJumpedOn=true (for a bridge), segmentsCollideWithPlayer=true
     }
     // --- End Horizontal Rope Bridge Creation ---
 }
