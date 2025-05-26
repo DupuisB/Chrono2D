@@ -15,7 +15,7 @@ const float PI = 3.14159265358979323846f;
 bool paused = false;
 
 const float TIME_STEP = 10.0f;
-const float TICK = 0.02f;
+const float TICK = 0.01f;
 
 std::vector<Vec2f> makePolygon(const Vec2f center, const float size, const int num_sides, float angle=0.0f);
 std::vector<Vec2f> makeRect(const Vec2f topLeft, float width, float height, float angle = 0.0f);
@@ -72,9 +72,9 @@ int main() {
     setupRigidBody(triangle, ecs, trianglePoints, 1.0f, sf::Color::Blue, false);
 
     // create dynamic pentagon entity
-    //Entity pentagon = ecs->createEntity();
-    //std::vector<Vec2f> pentagonPoints = makePolygon(Vec2f(600.0f, 100.0f), 50.0f, 5, 0.0f);
-    //setupRigidBody(pentagon, ecs, pentagonPoints, 1.0f, sf::Color::Blue, false);
+    Entity pentagon = ecs->createEntity();
+    std::vector<Vec2f> pentagonPoints = makePolygon(Vec2f(600.0f, 100.0f), 50.0f, 5, 0.0f);
+    setupRigidBody(pentagon, ecs, pentagonPoints, 1.0f, sf::Color::Blue, false);
 
     // second small cube
     Entity smallCube = ecs->createEntity();
@@ -121,7 +121,7 @@ std::vector<Vec2f> makePolygon(const Vec2f center, const float size, const int n
     float rotation = angle * (PI / 180.0f);
 
     for (int i = 0; i < num_sides; i++) {
-        float theta = -2.0f * PI * i / num_sides + rotation;
+        float theta = 2.0f * PI * i / num_sides + rotation;
         float x = center.x + size * std::cos(theta);
         float y = center.y + size * std::sin(theta);
         points.emplace_back(x, y);

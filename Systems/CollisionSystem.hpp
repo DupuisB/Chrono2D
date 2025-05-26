@@ -11,8 +11,7 @@
 struct SATResult {
     bool collision = false;
     Vec2f mtv = Vec2f(0, 0);
-    float overlap = 0.0f;
-    Vec2f axis = Vec2f(0, 0);
+    int i, j; // indices of the contact edge
 };
 
 
@@ -46,12 +45,20 @@ public:
                         SATResult result = satPointPolygon(point, polygonB, centerA, centerB);
                         if (!result.collision) continue;
 
+                        Vec2f contactEdgeA = polygonB[result.i];
+                        Vec2f contactEdgeB = polygonB[result.j];
+
                         float kA = massA.m / (massA.m + massB.m);
                         float kB = massB.m / (massA.m + massB.m);
                         Vec2f mtv = result.mtv;
 
                         point -= kA * mtv;
-                        for (auto& pb : polygonB) pb += (kB / polygonB.size()) * mtv;
+                        // find the point q that is the projection of point onto the contact edge
+                        Vec2f q = contactEdgeA + ((point - contactEdgeA).dot(contactEdgeB - contactEdgeA) / (contactEdgeB - contactEdgeA).lengthSquared()) * (contactEdgeB - contactEdgeA);
+                        float qA = (q - contactEdgeA).length() / (contactEdgeB - contactEdgeA).length();
+                        float qB = (q - contactEdgeB).length() / (contactEdgeB - contactEdgeA).length();
+                        polygonB[result.i] += kB * qB * mtv;
+                        polygonB[result.j] += kB * qA * mtv;
                     }
                 }
             }
@@ -61,7 +68,7 @@ public:
     SATResult satPointPolygon(const Vec2f& point, const std::vector<Vec2f>& polygon, const Vec2f centerA, const Vec2f centerB) {
         SATResult result;
         float minOverlap = 100000000000.0f;
-        Vec2f smallestAxis;
+        Vec2f smallestAxis = Vec2f(0, 0);
 
         for (int i=0; i < polygon.size(); i++) {
             Vec2f a = polygon[i];
@@ -77,12 +84,12 @@ public:
             if (overlap < minOverlap) {
                 minOverlap = overlap;
                 smallestAxis = axis;
+                result.i = i;
+                result.j = (i + 1) % polygon.size();
             }
         }
 
         result.collision = true;
-        result.axis = smallestAxis;
-        result.overlap = minOverlap;
         Vec2f direction = centerB - centerA;
         if (direction.dot(smallestAxis) < 0) {
             smallestAxis = -1.0f * smallestAxis;
