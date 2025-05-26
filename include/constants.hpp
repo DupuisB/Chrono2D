@@ -15,10 +15,13 @@ const unsigned int WINDOW_WIDTH  = 1600;
 const unsigned int WINDOW_HEIGHT = 1200;
 const float PIXELS_PER_METER = 32.0f;
 
+// --- Game Loop ---
+const float UPDATE_DELTA = 1.0f / 60.0f;
+
+
 // --- Physics Collision Categories ---
-// Using extern to define them in a .cpp file if needed, or just const for header-only.
 // For simplicity in this setup, we'll use const.
 const uint16_t CATEGORY_PLAYER = 0x0001;
-const uint16_t CATEGORY_WORLD  = 0x0002; // General world objects
+const uint16_t CATEGORY_WORLD  = 0x0002;
 
 #endif // CONSTANTS_HPP

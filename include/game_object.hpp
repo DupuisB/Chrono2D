@@ -10,12 +10,11 @@
  */
 class GameObject {
 public:
-    b2BodyId bodyId;        ///< ID of the Box2D rigid body.
-    b2ShapeId shapeId;      ///< ID of the Box2D shape attached to the body.
-    sf::RectangleShape sfShape; ///< SFML shape for visual representation.
-    bool hasVisual;         ///< Flag indicating if the object has a visual component.
-    bool canJumpOn;       ///< Flag indicating if the player can jump off this object.
-    // bool doPlayerCollide; ///< This is implicitly handled by collision filtering setup.
+    b2BodyId bodyId;
+    b2ShapeId shapeId;
+    sf::RectangleShape sfShape;
+    bool hasVisual;
+    bool canJumpOn;
 
     /**
      * @brief Default constructor.

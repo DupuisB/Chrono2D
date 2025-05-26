@@ -40,8 +40,7 @@ inline sf::Vector2f b2VecToSfVec(b2Vec2 vec, bool scale = true, bool flipY = tru
     float sfY = scale ? metersToPixels(vec.y) : vec.y;
     if (flipY) {
         // Box2D typically has Y positive upwards, SFML has Y positive downwards.
-        // This conversion assumes Box2D's origin is at the bottom-left for world coordinates
-        // when mapping to SFML's top-left origin.
+        // Box2D's origin is at the bottom-left for world coordinates (and SFML top left)
         return sf::Vector2f(sfX, WINDOW_HEIGHT - sfY);
     } else {
          return sf::Vector2f(sfX, sfY);
@@ -59,7 +58,7 @@ inline sf::Vector2f b2VecToSfVec(b2Vec2 vec, bool scale = true, bool flipY = tru
  */
 inline b2Vec2 sfVecToB2Vec(sf::Vector2f vec, bool scale = true, bool flipY = true) {
     float b2X = scale ? pixelsToMeters(vec.x) : vec.x;
-    float b2Y_intermediate = flipY ? WINDOW_HEIGHT - vec.y : vec.y; // Y in pixel space, potentially flipped
+    float b2Y_intermediate = flipY ? WINDOW_HEIGHT - vec.y : vec.y; // Y in pixel space
     float b2Y = scale ? pixelsToMeters(b2Y_intermediate) : b2Y_intermediate; // Convert to meters
     return {b2X, b2Y};
 }

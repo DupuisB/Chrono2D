@@ -3,6 +3,7 @@
 
 #include "include/game_object.hpp"
 #include "include/player.hpp"
+#include "include/constants.hpp"
 
 // --- Map Loading ---
 #include "maps/map1.hpp" // Change this to load different maps
@@ -51,8 +52,12 @@ int main() {
 
     // --- Main Game Loop ---
     while (window.isOpen()) {
-        float dt = clock.restart().asSeconds();
-        dt = std::min(dt, 0.05f); // Cap delta time to prevent physics instability with large steps
+        // Use the constant UPDATE_DELTA for fixed time step
+        // Calculate delta time for this frame
+
+        float elapsed_time = clock.restart().asSeconds(); //not used atm
+        float dt = UPDATE_DELTA;
+
 
         // --- SFML Event Handling ---
         bool jumpKeyHeld = false;
@@ -71,7 +76,6 @@ int main() {
         jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
 
         // --- Player Movement ---
-        // Utilise la fonction movePlayer de player.cpp au lieu de duplicer la logique
         movePlayer(worldId, playerBodyId, gameObjects, jumpKeyHeld,
                   wantsToMoveLeft, wantsToMoveRight, dt);
 
@@ -79,7 +83,6 @@ int main() {
         b2World_Step(worldId, dt, subSteps);
 
         // --- Update SFML Graphics ---
-        // Synchronize SFML shapes with Box2D body positions and rotations.
         for (auto& obj : gameObjects) {
             obj.updateShape();
         }
@@ -87,13 +90,13 @@ int main() {
         // --- Camera Follow Player ---
         if (!B2_IS_NULL(playerBodyId)) {
             b2Vec2 playerPos = b2Body_GetPosition(playerBodyId);
-            sf::Vector2f center = b2VecToSfVec(playerPos); // Convert Box2D position to SFML view center
+            sf::Vector2f center = b2VecToSfVec(playerPos);
             view.setCenter(center);
         }
-        window.setView(view); // Apply the updated view
+        window.setView(view); 
 
         // --- Rendering ---
-        window.clear(sf::Color(135, 206, 235)); // Light blue background
+        window.clear(sf::Color(135, 206, 235));
 
         // Draw all game objects
         for (const auto& obj : gameObjects) {
