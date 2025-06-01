@@ -59,11 +59,30 @@ public:
                         float qB = (q - contactEdgeB).length() / (contactEdgeB - contactEdgeA).length();
                         polygonB[result.i] += kB * qB * mtv;
                         polygonB[result.j] += kB * qA * mtv;
+                        // recheck each edge of polygonB against each edge of polygonA
+                        // if there is a collision, resolve it push both polygons apart
+
                     }
                 }
             }
         }
     }
+
+    void checkPolygonEdgeCollision(std::vector<Vec2f>& polygonA, std::vector<Vec2f>& polygonB) {
+        for (int i = 0; i < polygonA.size(); i++) {
+            Vec2f aStart = polygonA[i];
+            Vec2f aEnd = polygonA[(i + 1) % polygonA.size()];
+            for (int j = 0; j < polygonB.size(); j++) {
+                Vec2f bStart = polygonB[j];
+                Vec2f bEnd = polygonB[(j + 1) % polygonB.size()];
+                if (checkEdgeOnEdgeCollision(aStart, aEnd, bStart, bEnd)) {
+                    // Handle collision response here
+                }
+            }
+        }
+    }
+
+    SATResult polygonToPolygon(const std::vector<Vec2f>& polygonA, const )
 
     SATResult satPointPolygon(const Vec2f& point, const std::vector<Vec2f>& polygon, const Vec2f centerA, const Vec2f centerB) {
         SATResult result;
@@ -110,7 +129,20 @@ public:
     }
 
     bool projectionDoNotOverlap(float minA, float maxA, float minB, float maxB) {
-        return (minA >= maxB || minB >= maxA);
+        return (minA > maxB || minB > maxA);
+    }
+
+    bool checkEdgeOnEdgeCollision(const Vec2f& edgeAStart, const Vec2f& edgeAEnd, const Vec2f& edgeBStart, const Vec2f& edgeBEnd) {
+        Vec2f dA = edgeAEnd - edgeAStart;
+        Vec2f dB = edgeBEnd - edgeBStart;
+        float cross = dA.cross(dB);
+        if (cross == 0) return false; // edges are parallel
+
+        Vec2f diff = edgeBStart - edgeAStart;
+        float t = diff.cross(dB) / cross;
+        float u = diff.cross(dA) / cross;
+
+        return (t >= 0 && t <= 1 && u >= 0 && u <= 1);
     }
 };
 #endif // COLLISION_SYSTEM_HPP
