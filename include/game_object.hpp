@@ -33,6 +33,9 @@ public:
     bool isPlayer_prop_ {false}; // Property to guide setup, distinct from 'isPlayer' animation flag
     bool canJumpOn_prop_ {false}; // Property to guide setup
     bool collidesWithPlayer_prop_ {true}; // Property to guide setup
+    bool isFlag_prop_ {false}; // Property to identify a flag object
+    bool isSensor_prop_ {false}; // Property to make the shape a sensor
+    bool enableSensorEvents_prop_ {false}; // Property to enable sensor events for this shape
     uint64_t categoryBits_ {CATEGORY_WORLD}; // Changed to uint64_t
     uint64_t maskBits_ {CATEGORY_PLAYER | CATEGORY_WORLD}; // Changed to uint64_t
 
@@ -44,13 +47,17 @@ public:
     sf::Color color_val_ {sf::Color::White}; // Visual property
     bool hasVisual;
     bool canJumpOn; // Actual gameplay flag, set during finalize
+    bool isFlag_ {false}; // Actual flag, set during finalize
 
     // Sprite and Animation specific (primarily for Player)
     std::optional<sf::Sprite> sprite;
     bool isPlayer; // Flag to identify the player object for animation, set during finalize
     std::map<std::string, std::vector<sf::Texture>> animations; // e.g., "idle" -> {texture_idle}, "walk" -> {walk_tex1, walk_tex2}
     std::map<std::string, float> animationFrameDurations; // e.g., "walk" -> 0.15f (seconds per frame)
-    
+    sf::Texture genericTexture_; // Texture for non-animated sprites (e.g., flag)
+    std::string spriteTexturePath_prop_; // Path for generic sprite texture
+
+
     // Store original shape definition for dynamic resizing (player only)
     struct PlayerShapeInfo {
         float density;
@@ -86,7 +93,11 @@ public:
     void setIsPlayerProperty(bool isPlayerProp); // Sets the property used for initial setup
     void setCanJumpOnProperty(bool canJumpOnProp); // Sets the property used for initial setup
     void setCollidesWithPlayerProperty(bool collidesProp); // Sets the property used for initial setup
+    void setIsFlagProperty(bool isFlagProp); // Sets the property for flag identification
+    void setSpriteTexturePath(const std::string& path); // Sets path for generic sprite
     void setCollisionFilterData(uint64_t category, uint64_t mask); // Changed to uint64_t
+    void setIsSensorProperty(bool isSensorProp); // Sets the property to make the shape a sensor
+    void setEnableSensorEventsProperty(bool enableSensorEventsProp); // Sets property to enable sensor events
 
 
     // --- Finalization ---
@@ -121,6 +132,12 @@ public:
      * @return True if the bodyId is not null, false otherwise.
      */
     bool isValid() const;
+
+    /**
+     * @brief Ensures the sprite's internal texture pointer is correctly linked
+     * to this GameObject's own texture members. Crucial after copying a GameObject.
+     */
+    void ensureCorrectSpriteTextureLink();
 };
 
 #endif

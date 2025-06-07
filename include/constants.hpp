@@ -23,5 +23,6 @@ const float UPDATE_DELTA = 1.0f / 60.0f;
 // For simplicity in this setup, we'll use const.
 const uint64_t CATEGORY_PLAYER = 0x0001;
 const uint64_t CATEGORY_WORLD  = 0x0002;
+const uint64_t CATEGORY_FLAG   = 0x0004;
 
 #endif // CONSTANTS_HPP

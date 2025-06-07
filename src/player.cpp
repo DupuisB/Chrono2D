@@ -4,7 +4,7 @@
 #include "../include/game_object.hpp" // Required for GameObject class properties
 #include <cmath> // For std::abs, std::max, std::sqrt
 #include <algorithm> // For std::min, std::max
-#include <iostream> // For debugging animation states
+#include <iostream>
 
 // Helper function to get the sign of a number
 inline float sign(float val) {
@@ -64,11 +64,6 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
 
     if (leftKeyHeld) targetFacingLeft = true;
     if (rightKeyHeld) targetFacingLeft = false;
-    // If neither key is held, maintain current direction.
-    // If both are held, standard behavior is often to cancel out or prioritize one.
-    // Here, if both left and right are held, it will depend on the last one checked or initial state.
-    // For simplicity, if moving, direction is set. If stopping, direction is maintained.
-
 
     // --- Ground Check ---
     wasGroundedLastFrame = isGrounded;

@@ -5,6 +5,7 @@
 #include <box2d/box2d.h>
 #include "../include/game_object.hpp" // Includes utils.hpp and constants.hpp
 #include "../include/primitives/rope.hpp"      // For createSegmentedRope
+#include "../include/primitives/flag.hpp"      // For createFlag
 #include <vector>
 #include <iostream> // For std::cout, std::cerr
 #include <cmath>    // For b2Distance, M_PI / b2_pi
@@ -62,14 +63,15 @@ inline int loadMap1(b2WorldId worldId,
         playerObj.setFriction(0.7f); 
         playerObj.setRestitution(0.0f); // Player usually doesn't bounce
         
-        playerObj.setIsPlayerProperty(true); // This sets isPlayer_prop_ and appropriate collision filters
-                                             // (CATEGORY_PLAYER, mask CATEGORY_WORLD)
+        playerObj.setIsPlayerProperty(true);
+        playerObj.setEnableSensorEventsProperty(true);
         // playerObj.setCanJumpOnProperty(false); // Default is false
         // playerObj.setCollidesWithPlayerProperty(true); // Player collides with world, handled by setIsPlayerProperty
 
         if (playerObj.finalize(worldId)) {
             playerBodyId = playerObj.bodyId;
             gameObjects.push_back(playerObj);
+            gameObjects.back().ensureCorrectSpriteTextureLink(); // Add for player object
             playerIndex = static_cast<int>(gameObjects.size() - 1);
         } else {
             std::cerr << "Failed to create player object in map1." << std::endl;
@@ -233,6 +235,17 @@ inline int loadMap1(b2WorldId worldId,
                             true, true); 
     }
     // --- End Horizontal Rope Bridge Creation ---
+
+    // --- Create Flag ---
+    // Place the flag somewhere in the map, e.g., near the right side
+    float flagX_m = pixelsToMeters(WINDOW_WIDTH - 150.0f);
+    float groundHeightM_val_for_flag = pixelsToMeters(50); // Assuming ground height is 50px
+    float flagHeight_m_val = pixelsToMeters(120.0f); // Flag's own height
+    float flagY_m = groundHeightM_val_for_flag + flagHeight_m_val / 2.0f; // Position flag on the ground
+    
+    createFlag(worldId, gameObjects, flagX_m, flagY_m);
+    // --- End Flag Creation ---
+
     return playerIndex;
 }
 

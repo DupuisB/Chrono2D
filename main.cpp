@@ -14,6 +14,19 @@
 #include <optional>
 #include <numeric>
 #include <iomanip>
+#include <filesystem> // Required for std::filesystem::current_path
+
+// Helper function to find GameObject by shapeId
+GameObject* findGameObjectByShapeId(b2ShapeId shapeId, std::vector<GameObject>& gameObjects) {
+    if (B2_IS_NULL(shapeId)) return nullptr;
+    for (auto& obj : gameObjects) {
+        if (B2_ID_EQUALS(obj.shapeId, shapeId)) {
+            return &obj;
+        }
+    }
+    return nullptr;
+}
+
 
 /**
  * @brief Main entry point for the SFML Box2D Platformer game.
@@ -48,7 +61,7 @@ int main() {
     // --- Initialize Player Animations ---
     if (playerIndex != -1) {
         GameObject& playerObject = gameObjects[playerIndex];
-        std::string basePath = "../sprite/Female/Poses/";
+        std::string basePath = "../assets/sprite/character/Poses/";
 
         playerObject.loadPlayerAnimation("idle", {basePath + "female_idle.png"}, 0.1f);
         playerObject.loadPlayerAnimation("walk", {basePath + "female_walk1.png", basePath + "female_walk2.png"}, 0.15f);
@@ -64,6 +77,8 @@ int main() {
     // --- Game Loop Variables ---
     sf::Clock clock;
     int32_t subSteps = 8;   // Number of physics sub-steps per frame
+    bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once
+
 
     // --- Main Game Loop ---
     while (window.isOpen()) {
@@ -95,6 +110,38 @@ int main() {
 
         // --- Box2D Physics Step ---
         b2World_Step(worldId, dt, subSteps);
+
+        // --- Sensor Event Handling for Flag ---
+        if (!levelCompleted) {
+            b2SensorEvents sensorEvents = b2World_GetSensorEvents(worldId);
+            
+            for (int i = 0; i < sensorEvents.beginCount; ++i) {
+                b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+                GameObject* objA = findGameObjectByShapeId(event.sensorShapeId, gameObjects); // Shape that is the sensor
+                GameObject* objB = findGameObjectByShapeId(event.visitorShapeId, gameObjects); // Shape that entered the sensor
+
+                if (objA && objB) {
+                    bool playerHitFlag = false;
+                    // Check if one is player and the other is the flag sensor
+                    // Case 1: objA is the flag sensor, objB is the player
+                    if (objA->isFlag_prop_ && objA->isSensor_prop_ && objB->isPlayer) {
+                        playerHitFlag = true;
+                    } 
+                    // Case 2: objB is the flag sensor, objA is the player
+                    else if (objB->isFlag_prop_ && objB->isSensor_prop_ && objA->isPlayer) {
+                        playerHitFlag = true;
+                    }
+
+                    if (playerHitFlag) {
+                        std::cout << "Level completed !" << std::endl;
+                        levelCompleted = true;
+                        // Optional: Add further game end logic here (e.g., stop player, show message on screen)
+                    }
+                }
+            }
+            // Note: You might also want to handle sensorEvents.endEvents if needed
+        }
+
 
         // --- Update Player Animation ---
         if (playerIndex != -1) {

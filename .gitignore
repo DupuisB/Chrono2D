@@ -2,3 +2,5 @@ build/
 .vscode/
 play.sh
 migration.md
+sfml.md
+box2d.md
