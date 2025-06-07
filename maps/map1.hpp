@@ -17,13 +17,15 @@
  * @param worldId The ID of the Box2D world.
  * @param gameObjects A reference to the vector that will store all created GameObjects.
  * @param playerBodyId A reference to store the b2BodyId of the created player object.
+ * @return The index of the player GameObject in the gameObjects vector, or -1 if not created.
  */
-inline void loadMap1(b2WorldId worldId,
+inline int loadMap1(b2WorldId worldId,
                      std::vector<GameObject>& gameObjects,
                      b2BodyId& playerBodyId) { // Pass by reference to update player's body ID
 
     // Ensure playerBodyId is initialized to null before attempting to create the player.
     playerBodyId = b2_nullBodyId;
+    int playerIndex = -1;
 
     // Ground
     float groundWidthM = pixelsToMeters(WINDOW_WIDTH);
@@ -42,6 +44,28 @@ inline void loadMap1(b2WorldId worldId,
     playerBodyId = createRectangle(worldId, gameObjects, playerXM, playerYM, playerWidthM, playerHeightM,
                                    true, sf::Color::Blue, true, 0.0f, 1.0f, 0.7f, 0.0f,
                                    true, false, true); // isPlayer=true, canJumpOn=false (player can't jump on itself), doPlayerCollide=true (player collides with world)
+
+    // Find player index - assumes createRectangle adds the object and sets its 'isPlayer' flag correctly.
+    // And that the player is the last one added if multiple calls to createRectangle happen for player.
+    // A more robust way would be for createRectangle to return the object or its index if it's special.
+    // For now, search by playerBodyId or rely on the isPlayer flag set by init.
+    for (size_t i = 0; i < gameObjects.size(); ++i) {
+        if (gameObjects[i].isPlayer && B2_ID_EQUALS(gameObjects[i].bodyId, playerBodyId)) {
+            playerIndex = static_cast<int>(i);
+            break;
+        }
+    }
+    if (playerIndex == -1 && !B2_IS_NULL(playerBodyId)) { // Fallback if isPlayer wasn't set by createRectangle immediately
+         for (size_t i = 0; i < gameObjects.size(); ++i) {
+            if (B2_ID_EQUALS(gameObjects[i].bodyId, playerBodyId)) {
+                 // This assumes the GameObject corresponding to playerBodyId is indeed the player.
+                 // The isPlayerObject flag in createRectangle should handle this.
+                 // gameObjects[i].isPlayer = true; // Ensure it's marked if not already
+                 playerIndex = static_cast<int>(i);
+                 break;
+            }
+        }
+    }
 
 
     // Pushable Box
@@ -118,6 +142,7 @@ inline void loadMap1(b2WorldId worldId,
                             true, true); // segmentsCanBeJumpedOn=true (for a bridge), segmentsCollideWithPlayer=true
     }
     // --- End Horizontal Rope Bridge Creation ---
+    return playerIndex;
 }
 
 #endif // MAP1_HPP

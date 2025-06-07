@@ -6,7 +6,8 @@
  * @brief Default constructor for GameObject.
  * Initializes bodyId and shapeId to null and hasVisual to false.
  */
-GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVisual(false), canJumpOn(false) {}
+GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVisual(false), canJumpOn(false),
+                           isPlayer(false), /* sprite is default-initialized (empty optional) */ currentFrame(0), animationTimer(0.0f), spriteFlipped(false) {}
 
 /**
  * @brief Initializes the GameObject with a physical body and visual representation.
@@ -32,8 +33,12 @@ bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, fl
                       bool fixedRotation, float linearDamping,
                       float density, float friction, float restitution,
                       bool isPlayerObject, bool canJumpOnObject, bool doPlayerCollideWithObject) {
-    hasVisual = true;
-    this->canJumpOn = canJumpOnObject; // Store the canJumpOn status
+    this->isPlayer = isPlayerObject; // Set the player flag
+    this->canJumpOn = canJumpOnObject; 
+
+    // If it's a player, we might not want the default sfShape visual, or use it for debug.
+    // For now, sfShape is always initialized. Drawing logic will decide.
+    hasVisual = true; 
 
     sfShape.setSize({metersToPixels(width_m), metersToPixels(height_m)});
     sfShape.setFillColor(color);
@@ -87,25 +92,124 @@ bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, fl
 }
 
 /**
- * @brief Updates the SFML shape's position and rotation based on the Box2D body.
+ * @brief Loads a sequence of textures for a player animation state.
+ * @param name The name of the animation (e.g., "idle", "walk").
+ * @param framePaths Vector of file paths to the textures for each frame.
+ * @param frameDuration The time each frame should be displayed.
  */
-void GameObject::updateShape() {
-    if (!hasVisual || B2_IS_NULL(bodyId)) return;
-
-    b2Transform transform = b2Body_GetTransform(bodyId);
-    sfShape.setPosition(b2VecToSfVec(transform.p));
-
-    // Convert Box2D angle (radians, CCW positive) to SFML angle (degrees, CW positive)
-    float angleDegrees = -b2Rot_GetAngle(transform.q) * 180.0f / B2_PI;
-    sfShape.setRotation(sf::degrees(angleDegrees));
+void GameObject::loadPlayerAnimation(const std::string& name, const std::vector<std::string>& framePaths, float frameDuration) {
+    if (!isPlayer) return;
+    std::vector<sf::Texture> textures;
+    for (const std::string& path : framePaths) {
+        sf::Texture tex;
+        if (tex.loadFromFile(path)) {
+            textures.push_back(tex);
+        } else {
+            std::cerr << "Failed to load texture: " << path << " for animation: " << name << std::endl;
+        }
+    }
+    if (!textures.empty()) {
+        animations[name] = textures;
+        animationFrameDurations[name] = frameDuration;
+    }
 }
 
 /**
- * @brief Draws the GameObject's SFML shape to the given render window.
+ * @brief Sets the current player animation.
+ * @param name The name of the animation to play.
+ * @param flipped True if the sprite should be flipped horizontally (facing left).
+ */
+void GameObject::setPlayerAnimation(const std::string& name, bool flipped) {
+    if (!isPlayer || animations.find(name) == animations.end()) return;
+
+    if (currentAnimationName != name || spriteFlipped != flipped) {
+        currentAnimationName = name;
+        spriteFlipped = flipped;
+        currentFrame = 0;
+        animationTimer = 0.0f;
+
+        if (!animations[currentAnimationName].empty()) {
+            sf::Texture& tex = animations[currentAnimationName][currentFrame];
+            if (!sprite) { // If sprite is not yet constructed
+                sprite.emplace(tex); // Construct it with the texture
+            } else {
+                sprite->setTexture(tex); // Otherwise, just set the texture
+            }
+            sprite->setOrigin({static_cast<float>(tex.getSize().x) / 2.f, static_cast<float>(tex.getSize().y) / 2.f});
+        } else if (sprite) { 
+            // No frames for this animation, but sprite exists. 
+            // Option 1: Reset the optional, effectively removing the sprite.
+            sprite.reset(); 
+            // Option 2: Keep the sprite but clear its texture (if SFML allows setting a "null" or empty texture state).
+            // For now, resetting is cleaner if no texture means no visible sprite.
+        }
+    }
+}
+
+/**
+ * @brief Updates the current player animation frame based on delta time.
+ * @param dt Delta time since the last frame.
+ */
+void GameObject::updatePlayerAnimation(float dt) {
+    if (!isPlayer || !sprite || currentAnimationName.empty() || animations.find(currentAnimationName) == animations.end()) {
+        return;
+    }
+
+    const auto& animFrames = animations[currentAnimationName];
+    if (animFrames.size() <= 1) { // Single frame animation or no frames
+        if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) { // Compare addresses
+             sprite->setTexture(animFrames[0]); // Ensure correct texture is set
+             sprite->setOrigin({static_cast<float>(animFrames[0].getSize().x) / 2.f, static_cast<float>(animFrames[0].getSize().y) / 2.f});
+        }
+        return;
+    }
+
+    animationTimer += dt;
+    float frameDuration = animationFrameDurations[currentAnimationName];
+
+    if (animationTimer >= frameDuration) {
+        animationTimer -= frameDuration;
+        currentFrame = (currentFrame + 1) % animFrames.size();
+        sprite->setTexture(animFrames[currentFrame]);
+        sprite->setOrigin({static_cast<float>(animFrames[currentFrame].getSize().x) / 2.f, static_cast<float>(animFrames[currentFrame].getSize().y) / 2.f});
+    }
+}
+
+
+/**
+ * @brief Updates the SFML shape's position and rotation based on the Box2D body.
+ * Also updates the player sprite if applicable.
+ */
+void GameObject::updateShape() {
+    if (B2_IS_NULL(bodyId)) return;
+
+    b2Transform transform = b2Body_GetTransform(bodyId);
+    sf::Vector2f sfmlPos = b2VecToSfVec(transform.p);
+
+    // Update sfShape (can be used for non-player objects or as debug visual)
+    if (hasVisual) {
+        sfShape.setPosition(sfmlPos);
+        // Convert Box2D angle (radians, CCW positive) to SFML angle (degrees, CW positive)
+        float angleDegreesFloat = -b2Rot_GetAngle(transform.q) * 180.0f / B2_PI;
+        sfShape.setRotation(sf::degrees(angleDegreesFloat));
+    }
+
+    // Update player sprite
+    if (isPlayer && sprite && sprite->getTexture().getSize() != sf::Vector2u(0,0)) {
+        sprite->setPosition(sfmlPos);
+        sprite->setScale({spriteFlipped ? -1.f : 1.f, 1.f});
+        sprite->setRotation(sf::degrees(0.f)); 
+    }
+}
+
+/**
+ * @brief Draws the GameObject's SFML shape or sprite to the given render window.
  * @param window The SFML render window to draw on.
  */
 void GameObject::draw(sf::RenderWindow& window) const {
-    if (hasVisual && !B2_IS_NULL(bodyId)) {
+    if (isPlayer && sprite && sprite->getTexture().getSize() != sf::Vector2u(0,0)) {
+        window.draw(*sprite); // Draw the dereferenced optional
+    } else if (hasVisual && !B2_IS_NULL(bodyId)) { // Fallback or for non-player objects
         window.draw(sfShape);
     }
 }

@@ -4,6 +4,7 @@
 #include "../include/game_object.hpp" // Required for GameObject class properties
 #include <cmath> // For std::abs, std::max, std::sqrt
 #include <algorithm> // For std::min, std::max
+#include <iostream> // For debugging animation states
 
 // Helper function to get the sign of a number
 inline float sign(float val) {
@@ -12,7 +13,8 @@ inline float sign(float val) {
     return 0.0f;
 }
 
-void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<GameObject>& gameObjects,
+void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGameObject,
+                const std::vector<GameObject>& allGameObjects,
                 bool jumpKeyHeld, bool leftKeyHeld, bool rightKeyHeld, float dt) {
 
     if (B2_IS_NULL(playerBodyId)) return;
@@ -55,6 +57,18 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
     bool jumpKeyJustPressed = jumpKeyHeld && !previousJumpKeyHeld;
     previousJumpKeyHeld = jumpKeyHeld;
 
+    // --- Facing Direction ---
+    // Read current flip state from GameObject, if it's already flipped, it means it's facing left.
+    bool currentFacingLeft = playerGameObject.spriteFlipped; 
+    bool targetFacingLeft = currentFacingLeft;
+
+    if (leftKeyHeld) targetFacingLeft = true;
+    if (rightKeyHeld) targetFacingLeft = false;
+    // If neither key is held, maintain current direction.
+    // If both are held, standard behavior is often to cancel out or prioritize one.
+    // Here, if both left and right are held, it will depend on the last one checked or initial state.
+    // For simplicity, if moving, direction is set. If stopping, direction is maintained.
+
 
     // --- Ground Check ---
     wasGroundedLastFrame = isGrounded;
@@ -79,7 +93,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
             }
 
             // Check if the other body is a GameObject that can be jumped on
-            for(const auto& gameObject : gameObjects) {
+            for(const auto& gameObject : allGameObjects) { // Use allGameObjects for ground check
                 if (B2_ID_EQUALS(otherBodyId, gameObject.bodyId)) {
                     if (gameObject.canJumpOn && supportingNormalY > 0.7f) { // Check if contact normal is mostly upward
                         isGrounded = true;
@@ -138,6 +152,31 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, const std::vector<Game
 
 
     b2Body_SetGravityScale(playerBodyId, currentGravityScale);
+
+
+    // --- Animation State ---
+    std::string nextAnimation = playerGameObject.currentAnimationName; // Default to current
+    if (isGrounded) {
+        if (leftKeyHeld || rightKeyHeld) {
+            nextAnimation = "walk";
+        } else {
+            nextAnimation = "idle";
+        }
+    } else { // In air
+        if (playerVel.y > 0.1f) { // Moving upwards (positive Y in Box2D is up)
+            nextAnimation = "jump";
+        } else if (playerVel.y < -0.1f) { // Moving downwards
+            nextAnimation = "fall";
+        } else { // Near apex or very slight Y movement
+            // Keep jump if was jumping, or fall if was falling, else default to fall
+            if (playerGameObject.currentAnimationName == "jump" || playerGameObject.currentAnimationName == "fall") {
+                 nextAnimation = playerGameObject.currentAnimationName;
+            } else {
+                 nextAnimation = "fall"; // Default for in-air without strong vertical movement
+            }
+        }
+    }
+    playerGameObject.setPlayerAnimation(nextAnimation, targetFacingLeft);
 
 
     // --- Horizontal Movement ---

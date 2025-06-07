@@ -4,6 +4,10 @@
 #include <SFML/Graphics.hpp>
 #include <box2d/box2d.h>
 #include "utils.hpp" // Includes constants.hpp
+#include <map>
+#include <string>
+#include <vector>
+#include <optional> // Required for std::optional
 
 /**
  * @brief Represents a game entity with both a physical (Box2D) and visual (SFML) component.
@@ -15,6 +19,27 @@ public:
     sf::RectangleShape sfShape;
     bool hasVisual;
     bool canJumpOn;
+
+    // Sprite and Animation specific (primarily for Player)
+    std::optional<sf::Sprite> sprite; // Changed to std::optional
+    bool isPlayer; // Flag to identify the player object for animation
+    std::map<std::string, std::vector<sf::Texture>> animations; // e.g., "idle" -> {texture_idle}, "walk" -> {walk_tex1, walk_tex2}
+    std::map<std::string, float> animationFrameDurations; // e.g., "walk" -> 0.15f (seconds per frame)
+    
+    // Store original shape definition for dynamic resizing (player only)
+    struct PlayerShapeInfo {
+        float density;
+        float friction;
+        float restitution;
+        b2Filter filter;
+    };
+    std::optional<PlayerShapeInfo> playerShapeInfo; // Store if this is a player
+
+    std::string currentAnimationName;
+    int currentFrame;
+    float animationTimer;
+    bool spriteFlipped; // True if sprite should be flipped horizontally (facing left)
+
 
     /**
      * @brief Default constructor.
@@ -47,6 +72,11 @@ public:
               bool fixedRotation = false, float linearDamping = 0.0f,
               float density = 1.0f, float friction = 0.7f, float restitution = 0.1f,
               bool isPlayerObject = false, bool canJumpOnObject = false, bool doPlayerCollideWithObject = true);
+
+    // Methods for player animation
+    void loadPlayerAnimation(const std::string& name, const std::vector<std::string>& framePaths, float frameDuration);
+    void setPlayerAnimation(const std::string& name, bool flipped); // 'flipped' is true if facing left
+    void updatePlayerAnimation(float dt);
 
     /**
      * @brief Updates the SFML shape's position and rotation from the Box2D body.
