@@ -28,7 +28,7 @@ int main() {
     sf::View view = window.getDefaultView();
 
     // Initialize Box2D world
-    b2Vec2 gravity = {0.0f, -10.0f}; // Standard gravity pointing downwards
+    b2Vec2 gravity = {0.0f, -10.0f};
     b2WorldDef worldDef = b2DefaultWorldDef();
     worldDef.gravity = gravity;
     b2WorldId worldId = b2CreateWorld(&worldDef);
@@ -37,22 +37,19 @@ int main() {
         return -1;
     }
 
-    std::vector<GameObject> gameObjects; // Stores all game objects
-    b2BodyId playerBodyId = b2_nullBodyId; // ID of the player's body
-    int playerIndex = -1; // Index of the player in gameObjects
+    std::vector<GameObject> gameObjects;
+    b2BodyId playerBodyId = b2_nullBodyId;
+    int playerIndex = -1;
 
     // --- Load Map Objects ---
-    // Populates gameObjects, playerBodyId, and groundPlatformIds based on the selected map.
-    // loadMap1 now returns the player's index.
+    // Populates gameObjects, playerBodyId, and playerIndex based on the selected map.
     playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
 
     // --- Initialize Player Animations ---
     if (playerIndex != -1) {
         GameObject& playerObject = gameObjects[playerIndex];
-        // Base path for player sprites
         std::string basePath = "../sprite/Female/Poses/";
 
-        // Load animations: {animation_name, {frame_paths}, frame_duration}
         playerObject.loadPlayerAnimation("idle", {basePath + "female_idle.png"}, 0.1f);
         playerObject.loadPlayerAnimation("walk", {basePath + "female_walk1.png", basePath + "female_walk2.png"}, 0.15f);
         playerObject.loadPlayerAnimation("jump", {basePath + "female_jump.png"}, 0.1f);
@@ -64,18 +61,13 @@ int main() {
     }
 
 
-    // --- End Load Map Objects ---
-
     // --- Game Loop Variables ---
-    sf::Clock clock;        // Measures time between frames
-    int32_t subSteps = 8;   // Number of physics sub-steps per frame for stability
+    sf::Clock clock;
+    int32_t subSteps = 8;   // Number of physics sub-steps per frame
 
     // --- Main Game Loop ---
     while (window.isOpen()) {
-        // Use the constant UPDATE_DELTA for fixed time step
-        // Calculate delta time for this frame
-
-        float elapsed_time = clock.restart().asSeconds(); //not used atm
+        float elapsed_time = clock.restart().asSeconds();
         float dt = UPDATE_DELTA;
 
 

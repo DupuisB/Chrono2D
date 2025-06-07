@@ -75,7 +75,7 @@ inline bool createSegmentedRope(
     b2Vec2 prevBodyLocalConnectAnchor = localAnchorA;
 
     for (int i = 0; i < numSegments; ++i) {
-        GameObject segmentObj;
+        GameObject segmentObj; 
         float segWidth, segHeight;
         b2Vec2 currentSegmentLocalConnectAnchorToPrev; 
         b2Vec2 currentSegmentLocalConnectAnchorToNext;
@@ -99,16 +99,24 @@ inline bool createSegmentedRope(
             worldPosA.y + t * (worldPosB.y - worldPosA.y)
         };
         
-        // Initial orientation: Box2D bodies are created with angle 0.
-        // The revolute joints will allow them to hang/drape naturally.
-        // For very stiff ropes or specific initial configurations, one might set bodyDef.angle.
-        // Here, we assume segments are created axis-aligned and physics sorts it out.
+        segmentObj.setPosition(segmentCenterPos.x, segmentCenterPos.y);
+        segmentObj.setSize(segWidth, segHeight);
+        segmentObj.setDynamic(true); // Rope segments are always dynamic
+        segmentObj.setColor(color);
+        segmentObj.setFixedRotation(false); // Rope segments should rotate
+        segmentObj.setLinearDamping(segmentLinearDamping);
+        segmentObj.setDensity(segmentDensity);
+        segmentObj.setFriction(segmentFriction);
+        segmentObj.setRestitution(segmentRestitution);
+        
+        segmentObj.setIsPlayerProperty(false); // Segments are not the player
+        segmentObj.setCanJumpOnProperty(segmentsCanBeJumpedOn);
+        segmentObj.setCollidesWithPlayerProperty(segmentsCollideWithPlayer);
+        // Note: setIsPlayerProperty(false) and setCollidesWithPlayerProperty() will set appropriate
+        // categoryBits_ and maskBits_ by default. If more specific filtering is needed for rope segments,
+        // segmentObj.setCollisionFilterData(CATEGORY_ROPE_SEGMENT, MASK_ROPE_SEGMENT) could be used.
 
-        if (segmentObj.init(worldId, segmentCenterPos.x, segmentCenterPos.y,
-                            segWidth, segHeight,
-                            true, color, false, // isDynamic, no fixed rotation
-                            segmentLinearDamping, segmentDensity, segmentFriction, segmentRestitution,
-                            false, segmentsCanBeJumpedOn, segmentsCollideWithPlayer)) { // isPlayerObject=false
+        if (segmentObj.finalize(worldId)) {
             gameObjects.push_back(segmentObj);
             b2BodyId currentSegmentBodyId = segmentObj.bodyId;
 

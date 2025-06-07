@@ -4,55 +4,164 @@
 
 /**
  * @brief Default constructor for GameObject.
- * Initializes bodyId and shapeId to null and hasVisual to false.
+ * Initializes bodyId and shapeId to null, hasVisual to false,
+ * and sets default values for configurable properties.
  */
 GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVisual(false), canJumpOn(false),
-                           isPlayer(false), /* sprite is default-initialized (empty optional) */ currentFrame(0), animationTimer(0.0f), spriteFlipped(false) {}
+                           isPlayer(false), currentFrame(0), animationTimer(0.0f), spriteFlipped(false) {
+    // Default property values are set via member initialization in the header.
+    // Or can be explicitly set here if preferred.
+    // Example: x_m_ = 0.0f; y_m_ = 0.0f; width_m_ = 1.0f; etc.
+}
 
-/**
- * @brief Initializes the GameObject with a physical body and visual representation.
- * @param worldId The Box2D world ID.
- * @param x_m Initial x-position in meters.
- * @param y_m Initial y-position in meters.
- * @param width_m Width of the object in meters.
- * @param height_m Height of the object in meters.
- * @param isDynamic True if the body should be dynamic, false for static.
- * @param color Color of the SFML shape.
- * @param fixedRotation True to prevent the body from rotating.
- * @param linearDamping Damping to reduce linear velocity over time.
- * @param density Density of the body's material.
- * @param friction Friction coefficient of the body's material.
- * @param restitution Restitution (bounciness) of the body's material.
- * @param isPlayerObject True if this game object represents the player.
- * @param canJumpOnObject True if the player can jump from this object.
- * @param doPlayerCollideWithObject True if the player should collide with this object.
- * @return True if initialization was successful, false otherwise.
- */
-bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, float height_m,
-                      bool isDynamic, sf::Color color,
-                      bool fixedRotation, float linearDamping,
-                      float density, float friction, float restitution,
-                      bool isPlayerObject, bool canJumpOnObject, bool doPlayerCollideWithObject) {
-    this->isPlayer = isPlayerObject; // Set the player flag
-    this->canJumpOn = canJumpOnObject; 
+// --- Property Setters ---
+void GameObject::setPosition(float x, float y) {
+    x_m_ = x;
+    y_m_ = y;
+}
 
-    // If it's a player, we might not want the default sfShape visual, or use it for debug.
-    // For now, sfShape is always initialized. Drawing logic will decide.
-    hasVisual = true; 
+void GameObject::setSize(float w, float h) {
+    width_m_ = w;
+    height_m_ = h;
+}
 
-    sfShape.setSize({metersToPixels(width_m), metersToPixels(height_m)});
-    sfShape.setFillColor(color);
-    sfShape.setOrigin({metersToPixels(width_m) / 2.0f, metersToPixels(height_m) / 2.0f});
-    // Set initial SFML shape position; this will be updated by updateShape() if the body is valid.
-    sfShape.setPosition(b2VecToSfVec({x_m, y_m}));
+void GameObject::setDynamic(bool dynamic) {
+    isDynamic_val_ = dynamic;
+    if (!isDynamic_val_) { // Static bodies typically have 0 density by convention in Box2D
+        density_val_ = 0.0f;
+    }
+}
+
+void GameObject::setColor(sf::Color c) {
+    color_val_ = c;
+    if (hasVisual) { // If sfShape already exists (e.g. finalize was called, then color changed)
+        sfShape.setFillColor(color_val_);
+    }
+}
+
+void GameObject::setFixedRotation(bool fixed) {
+    fixedRotation_val_ = fixed;
+    if (!B2_IS_NULL(bodyId) && isDynamic_val_) {
+        b2Body_SetFixedRotation(bodyId, fixedRotation_val_);
+    }
+}
+
+void GameObject::setLinearDamping(float damping) {
+    linearDamping_val_ = damping;
+    if (!B2_IS_NULL(bodyId) && isDynamic_val_) {
+        b2Body_SetLinearDamping(bodyId, linearDamping_val_);
+    }
+}
+
+void GameObject::setDensity(float d) {
+    density_val_ = d;
+    // Note: Density is used at shape creation. Changing it live requires
+    // destroying and recreating the shape or using b2Shape_SetDensity
+    // and then b2Body_ResetMassData or similar, if available and appropriate.
+    // For this refactor, density is set before finalize().
+}
+
+void GameObject::setFriction(float f) {
+    friction_val_ = f;
+    if (!B2_IS_NULL(shapeId)) {
+        b2Shape_SetFriction(shapeId, friction_val_);
+    }
+}
+
+void GameObject::setRestitution(float r) {
+    restitution_val_ = r;
+    if (!B2_IS_NULL(shapeId)) {
+        b2Shape_SetRestitution(shapeId, restitution_val_);
+    }
+}
+
+void GameObject::setIsPlayerProperty(bool isPlayerProp) {
+    isPlayer_prop_ = isPlayerProp;
+    // This might also influence default collision filter bits if called before finalize
+    if (isPlayer_prop_) {
+        categoryBits_ = CATEGORY_PLAYER;
+        maskBits_ = CATEGORY_WORLD;
+    } else {
+        // Revert to default world object if it was player before
+        // This logic depends on how you want setIsPlayerProperty to behave regarding filters
+        categoryBits_ = CATEGORY_WORLD;
+        maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD; // Default for world object
+        if (!collidesWithPlayer_prop_) { // If it shouldn't collide with player
+             maskBits_ = CATEGORY_WORLD;
+        }
+    }
+
+    if (!B2_IS_NULL(shapeId)) { // If shape exists, update filter
+        b2Filter filter;
+        filter.categoryBits = categoryBits_;
+        filter.maskBits = maskBits_;
+        filter.groupIndex = 0; // Default group
+        b2Shape_SetFilter(shapeId, filter);
+    }
+    if (!B2_IS_NULL(bodyId)) { // Update the GameObject's own 'isPlayer' animation flag
+        this->isPlayer = isPlayer_prop_;
+    }
+}
+
+void GameObject::setCanJumpOnProperty(bool canJumpOnProp) {
+    canJumpOn_prop_ = canJumpOnProp;
+    if (!B2_IS_NULL(bodyId)) { // Update the GameObject's own 'canJumpOn' gameplay flag
+         this->canJumpOn = canJumpOn_prop_;
+    }
+}
+
+void GameObject::setCollidesWithPlayerProperty(bool collidesProp) {
+    collidesWithPlayer_prop_ = collidesProp;
+    if (!isPlayer_prop_) { // Only relevant if this object is not the player itself
+        if (collidesWithPlayer_prop_) {
+            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD;
+        } else {
+            maskBits_ = CATEGORY_WORLD;
+        }
+        if (!B2_IS_NULL(shapeId)) { // If shape exists, update filter
+            b2Filter filter;
+            filter.categoryBits = categoryBits_; // categoryBits_ should be CATEGORY_WORLD
+            filter.maskBits = maskBits_;
+            filter.groupIndex = 0;
+            b2Shape_SetFilter(shapeId, filter);
+        }
+    }
+}
+
+void GameObject::setCollisionFilterData(uint64_t category, uint64_t mask) {
+    categoryBits_ = category;
+    maskBits_ = mask;
+    if (!B2_IS_NULL(shapeId)) {
+        b2Filter filter;
+        filter.categoryBits = categoryBits_;
+        filter.maskBits = maskBits_;
+        filter.groupIndex = 0;
+        b2Shape_SetFilter(shapeId, filter);
+    }
+}
 
 
+// --- Finalization ---
+bool GameObject::finalize(b2WorldId worldId) {
+    if (!B2_IS_NULL(bodyId)) {
+        std::cerr << "GameObject already finalized or has a body." << std::endl;
+        return false; // Already finalized
+    }
+
+    // Setup SFML Shape
+    sfShape.setSize({metersToPixels(width_m_), metersToPixels(height_m_)});
+    sfShape.setFillColor(color_val_);
+    sfShape.setOrigin({metersToPixels(width_m_) / 2.0f, metersToPixels(height_m_) / 2.0f});
+    sfShape.setPosition(b2VecToSfVec({x_m_, y_m_})); // Initial position
+    hasVisual = true;
+
+    // Create Box2D Body
     b2BodyDef bodyDef = b2DefaultBodyDef();
-    bodyDef.type = isDynamic ? b2_dynamicBody : b2_staticBody;
-    bodyDef.position = {x_m, y_m};
-    if (isDynamic) {
-         bodyDef.fixedRotation = fixedRotation;
-         bodyDef.linearDamping = linearDamping;
+    bodyDef.type = isDynamic_val_ ? b2_dynamicBody : b2_staticBody;
+    bodyDef.position = {x_m_, y_m_};
+    if (isDynamic_val_) {
+        bodyDef.fixedRotation = fixedRotation_val_;
+        bodyDef.linearDamping = linearDamping_val_;
     }
     bodyId = b2CreateBody(worldId, &bodyDef);
     if (B2_IS_NULL(bodyId)) {
@@ -61,33 +170,31 @@ bool GameObject::init(b2WorldId worldId, float x_m, float y_m, float width_m, fl
         return false;
     }
 
-    b2Polygon box = b2MakeBox(width_m / 2.0f, height_m / 2.0f);
+    // Create Box2D Shape
+    b2Polygon box = b2MakeBox(width_m_ / 2.0f, height_m_ / 2.0f);
     b2ShapeDef shapeDef = b2DefaultShapeDef();
-    shapeDef.density = isDynamic ? density : 0.0f; // Static bodies should have zero density
-    shapeDef.material.friction = friction;
-    shapeDef.material.restitution = restitution;
+    shapeDef.density = density_val_; // density_val_ should be 0 for static if isDynamic_val_ is false
+    shapeDef.material.friction = friction_val_;
+    shapeDef.material.restitution = restitution_val_;
 
-    // Setup collision filtering
-    if (isPlayerObject) {
-        shapeDef.filter.categoryBits = CATEGORY_PLAYER;
-        shapeDef.filter.maskBits = CATEGORY_WORLD; // Player collides with world objects
-    } else {
-        shapeDef.filter.categoryBits = CATEGORY_WORLD;
-        if (doPlayerCollideWithObject) {
-            shapeDef.filter.maskBits = CATEGORY_PLAYER | CATEGORY_WORLD; // World object collides with player and other world objects
-        } else {
-            shapeDef.filter.maskBits = CATEGORY_WORLD; // World object collides only with other world objects
-        }
-    }
+    // Setup collision filtering based on properties
+    shapeDef.filter.categoryBits = categoryBits_;
+    shapeDef.filter.maskBits = maskBits_;
+    shapeDef.filter.groupIndex = 0; // Default group index
 
     shapeId = b2CreatePolygonShape(bodyId, &shapeDef, &box);
     if (B2_IS_NULL(shapeId)) {
         std::cerr << "Error creating Box2D shape for GameObject!" << std::endl;
-        b2DestroyBody(bodyId); // Clean up the created body if shape creation fails
+        b2DestroyBody(bodyId); // Clean up
         bodyId = b2_nullBodyId;
         hasVisual = false;
         return false;
     }
+
+    // Set internal gameplay flags
+    this->isPlayer = isPlayer_prop_;
+    this->canJumpOn = canJumpOn_prop_;
+
     return true;
 }
 
@@ -133,14 +240,12 @@ void GameObject::setPlayerAnimation(const std::string& name, bool flipped) {
             if (!sprite) { // If sprite is not yet constructed
                 sprite.emplace(tex); // Construct it with the texture
             } else {
-                sprite->setTexture(tex); // Otherwise, just set the texture
+                sprite->setTexture(tex);
             }
             sprite->setOrigin({static_cast<float>(tex.getSize().x) / 2.f, static_cast<float>(tex.getSize().y) / 2.f});
         } else if (sprite) { 
-            // No frames for this animation, but sprite exists. 
-            // Option 1: Reset the optional, effectively removing the sprite.
+            // No frames for this animation, but sprite exists.
             sprite.reset(); 
-            // Option 2: Keep the sprite but clear its texture (if SFML allows setting a "null" or empty texture state).
             // For now, resetting is cleaner if no texture means no visible sprite.
         }
     }
@@ -157,7 +262,7 @@ void GameObject::updatePlayerAnimation(float dt) {
 
     const auto& animFrames = animations[currentAnimationName];
     if (animFrames.size() <= 1) { // Single frame animation or no frames
-        if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) { // Compare addresses
+        if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) {
              sprite->setTexture(animFrames[0]); // Ensure correct texture is set
              sprite->setOrigin({static_cast<float>(animFrames[0].getSize().x) / 2.f, static_cast<float>(animFrames[0].getSize().y) / 2.f});
         }
@@ -208,7 +313,7 @@ void GameObject::updateShape() {
  */
 void GameObject::draw(sf::RenderWindow& window) const {
     if (isPlayer && sprite && sprite->getTexture().getSize() != sf::Vector2u(0,0)) {
-        window.draw(*sprite); // Draw the dereferenced optional
+        window.draw(*sprite);
     } else if (hasVisual && !B2_IS_NULL(bodyId)) { // Fallback or for non-player objects
         window.draw(sfShape);
     }
@@ -220,23 +325,4 @@ void GameObject::draw(sf::RenderWindow& window) const {
  */
 bool GameObject::isValid() const {
     return !B2_IS_NULL(bodyId);
-}
-
-/**
- * @brief Helper function to create a static anchor body in the Box2D world.
- * Useful for joints that need a fixed point in the world.
- * @param worldId The Box2D world ID.
- * @param x_m The x-position of the anchor in meters.
- * @param y_m The y-position of the anchor in meters.
- * @return The b2BodyId of the created static anchor body, or b2_nullBodyId if creation failed.
- */
-b2BodyId createAnchorBody(b2WorldId worldId, float x_m, float y_m) {
-     b2BodyDef bodyDef = b2DefaultBodyDef();
-     bodyDef.type = b2_staticBody;
-     bodyDef.position = {x_m, y_m};
-     b2BodyId bodyId = b2CreateBody(worldId, &bodyDef);
-     if (B2_IS_NULL(bodyId)) {
-         std::cerr << "Error creating anchor body!" << std::endl;
-     }
-     return bodyId;
 }

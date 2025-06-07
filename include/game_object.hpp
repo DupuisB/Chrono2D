@@ -14,15 +14,40 @@
  */
 class GameObject {
 public:
+    // --- Properties to be set before finalize() ---
+    // Position and Size (meters)
+    float x_m_ {0.0f};
+    float y_m_ {0.0f};
+    float width_m_ {1.0f};
+    float height_m_ {1.0f};
+
+    // Physics properties
+    bool isDynamic_val_ {false};
+    bool fixedRotation_val_ {false};
+    float linearDamping_val_ {0.0f};
+    float density_val_ {1.0f};
+    float friction_val_ {0.7f};
+    float restitution_val_ {0.1f};
+
+    // Gameplay and Collision properties
+    bool isPlayer_prop_ {false}; // Property to guide setup, distinct from 'isPlayer' animation flag
+    bool canJumpOn_prop_ {false}; // Property to guide setup
+    bool collidesWithPlayer_prop_ {true}; // Property to guide setup
+    uint64_t categoryBits_ {CATEGORY_WORLD}; // Changed to uint64_t
+    uint64_t maskBits_ {CATEGORY_PLAYER | CATEGORY_WORLD}; // Changed to uint64_t
+
+
+    // --- SFML/Box2D members ---
     b2BodyId bodyId;
     b2ShapeId shapeId;
     sf::RectangleShape sfShape;
+    sf::Color color_val_ {sf::Color::White}; // Visual property
     bool hasVisual;
-    bool canJumpOn;
+    bool canJumpOn; // Actual gameplay flag, set during finalize
 
     // Sprite and Animation specific (primarily for Player)
-    std::optional<sf::Sprite> sprite; // Changed to std::optional
-    bool isPlayer; // Flag to identify the player object for animation
+    std::optional<sf::Sprite> sprite;
+    bool isPlayer; // Flag to identify the player object for animation, set during finalize
     std::map<std::string, std::vector<sf::Texture>> animations; // e.g., "idle" -> {texture_idle}, "walk" -> {walk_tex1, walk_tex2}
     std::map<std::string, float> animationFrameDurations; // e.g., "walk" -> 0.15f (seconds per frame)
     
@@ -46,32 +71,33 @@ public:
      */
     GameObject();
 
+    // --- Setters for properties ---
+    void setPosition(float x, float y);
+    void setSize(float w, float h);
+    void setDynamic(bool dynamic);
+    void setColor(sf::Color c);
+    void setFixedRotation(bool fixed);
+    void setLinearDamping(float damping);
+    void setDensity(float d);
+    void setFriction(float f);
+    void setRestitution(float r);
+    
+    // Gameplay/Collision Setters
+    void setIsPlayerProperty(bool isPlayerProp); // Sets the property used for initial setup
+    void setCanJumpOnProperty(bool canJumpOnProp); // Sets the property used for initial setup
+    void setCollidesWithPlayerProperty(bool collidesProp); // Sets the property used for initial setup
+    void setCollisionFilterData(uint64_t category, uint64_t mask); // Changed to uint64_t
+
+
+    // --- Finalization ---
     /**
-     * @brief Initializes the GameObject.
-     * Creates a Box2D body and shape, and sets up the SFML visual component.
-     * Also configures collision filtering and jump properties.
+     * @brief Finalizes the GameObject by creating its Box2D body and shape,
+     * and setting up SFML visuals based on previously set properties.
      * @param worldId The Box2D world ID.
-     * @param x_m Initial x-position in meters.
-     * @param y_m Initial y-position in meters.
-     * @param width_m Width of the object in meters.
-     * @param height_m Height of the object in meters.
-     * @param isDynamic True if the body should be dynamic, false for static.
-     * @param color Color of the SFML shape.
-     * @param fixedRotation True to prevent the body from rotating (default: false).
-     * @param linearDamping Damping to reduce linear velocity over time (default: 0.0f).
-     * @param density Density of the body's material (default: 1.0f).
-     * @param friction Friction coefficient (default: 0.7f).
-     * @param restitution Restitution (bounciness) coefficient (default: 0.1f).
-     * @param isPlayerObject True if this game object represents the player.
-     * @param canJumpOnObject True if the player can jump from this object.
-     * @param doPlayerCollideWithObject True if the player should collide with this object.
-     * @return True if initialization was successful, false otherwise.
+     * @return True if finalization was successful, false otherwise.
      */
-    bool init(b2WorldId worldId, float x_m, float y_m, float width_m, float height_m,
-              bool isDynamic, sf::Color color,
-              bool fixedRotation = false, float linearDamping = 0.0f,
-              float density = 1.0f, float friction = 0.7f, float restitution = 0.1f,
-              bool isPlayerObject = false, bool canJumpOnObject = false, bool doPlayerCollideWithObject = true);
+    bool finalize(b2WorldId worldId);
+
 
     // Methods for player animation
     void loadPlayerAnimation(const std::string& name, const std::vector<std::string>& framePaths, float frameDuration);
@@ -96,15 +122,5 @@ public:
      */
     bool isValid() const;
 };
-
-/**
- * @brief Creates a static anchor body at a specified world position.
- * Useful for attaching joints to a fixed point in the world.
- * @param worldId The ID of the Box2D world.
- * @param x_m The x-coordinate of the anchor in meters.
- * @param y_m The y-coordinate of the anchor in meters.
- * @return The b2BodyId of the created anchor body, or b2_nullBodyId on failure.
- */
-b2BodyId createAnchorBody(b2WorldId worldId, float x_m, float y_m);
 
 #endif
