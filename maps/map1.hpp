@@ -50,8 +50,8 @@ inline int loadMap1(b2WorldId worldId,
     // Player
     {
         GameObject playerObj;
-        float playerWidthM = pixelsToMeters(30);
-        float playerHeightM = pixelsToMeters(50);
+        float playerWidthM = pixelsToMeters(70);
+        float playerHeightM = pixelsToMeters(90);
         playerObj.setPosition(pixelsToMeters(100), pixelsToMeters(300));
         playerObj.setSize(playerWidthM, playerHeightM);
         playerObj.setDynamic(true);
