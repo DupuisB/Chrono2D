@@ -28,8 +28,8 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     static const float PLAYER_TURN_SPEED_FACTOR = 1.5f;
 
     // Jump
-    static const float PLAYER_JUMP_HEIGHT = 2.5f;
-    static const float PLAYER_TIME_TO_JUMP_APEX = 0.4f;
+    static const float PLAYER_JUMP_HEIGHT = 5.0f;
+    static const float PLAYER_TIME_TO_JUMP_APEX = 0.6f;
 
     // Gravity Modification
     static const float PLAYER_FALL_GRAVITY_FACTOR = 5.0f;

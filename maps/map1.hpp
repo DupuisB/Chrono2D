@@ -26,28 +26,6 @@ inline int loadMap1(b2WorldId worldId,
     playerBodyId = b2_nullBodyId;
     int playerIndex = -1;
 
-    // Ground
-    {
-        GameObject groundObj;
-        float groundWidthM = pixelsToMeters(WINDOW_WIDTH);
-        float groundHeightM = pixelsToMeters(50);
-        groundObj.setPosition(groundWidthM / 2.0f, groundHeightM / 2.0f);
-        groundObj.setSize(groundWidthM, groundHeightM);
-        groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
-        groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
-        groundObj.setIsPlayerProperty(false);
-        groundObj.setCanJumpOnProperty(true);
-        groundObj.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
-
-        if (groundObj.finalize(worldId)) {
-            gameObjects.push_back(groundObj);
-        } else {
-            std::cerr << "Failed to create ground object in map1." << std::endl;
-        }
-    }
-
     // Player
     {
         GameObject playerObj;
@@ -65,8 +43,6 @@ inline int loadMap1(b2WorldId worldId,
         
         playerObj.setIsPlayerProperty(true);
         playerObj.setEnableSensorEventsProperty(true);
-        // playerObj.setCanJumpOnProperty(false); // Default is false
-        // playerObj.setCollidesWithPlayerProperty(true); // Player collides with world, handled by setIsPlayerProperty
 
         if (playerObj.finalize(worldId)) {
             playerBodyId = playerObj.bodyId;
@@ -79,172 +55,114 @@ inline int loadMap1(b2WorldId worldId,
         }
     }
 
-    // Pushable Box
+    // Ground
     {
-        GameObject boxObj;
-        float boxSizeM = pixelsToMeters(40);
-        float groundCenterY_m = pixelsToMeters(50) / 2.0f; // Assuming ground is at y=0 to y=50px
-        float groundTopY_m = pixelsToMeters(50); // If ground bottom is at y=0
-        
-        // Corrected Y position calculation:
-        // Ground is created with its center at groundHeightM / 2.0f.
-        // So its top surface is at groundHeightM.
-        float groundHeightM_val = pixelsToMeters(50); // Use the actual value
-        boxObj.setPosition(pixelsToMeters(400), groundHeightM_val + boxSizeM / 2.0f + pixelsToMeters(1));
-        boxObj.setSize(boxSizeM, boxSizeM);
-        boxObj.setDynamic(true);
-        boxObj.setColor(sf::Color::Red);
-        // boxObj.setFixedRotation(false); // Default
-        boxObj.setLinearDamping(0.2f);
-        boxObj.setDensity(1.0f); 
-        boxObj.setFriction(0.7f);
-        boxObj.setRestitution(0.1f);
-        boxObj.setIsPlayerProperty(false);
-        boxObj.setCanJumpOnProperty(true);
-        boxObj.setCollidesWithPlayerProperty(true);
+        GameObject groundObj;
+        float groundWidthM = pixelsToMeters(1000);
+        float groundHeightM = pixelsToMeters(300);
+        groundObj.setPosition(0, - groundHeightM / 2.0f);
+        groundObj.setSize(groundWidthM, groundHeightM);
+        groundObj.setDynamic(false); // Sets density to 0
+        groundObj.setColor(sf::Color::Green);
+        groundObj.setFriction(0.7f);
+        groundObj.setRestitution(0.1f);
+        groundObj.setIsPlayerProperty(false);
+        groundObj.setCanJumpOnProperty(true);
+        groundObj.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
 
-        if (boxObj.finalize(worldId)) {
-            gameObjects.push_back(boxObj);
+        if (groundObj.finalize(worldId)) {
+            gameObjects.push_back(groundObj);
         } else {
-            std::cerr << "Failed to create pushable box object in map1." << std::endl;
+            std::cerr << "Failed to create ground object in map1." << std::endl;
         }
     }
 
-    // --- Hanging Platform ---
-    b2BodyId platformBodyId = b2_nullBodyId; // Declare here for scope
+    // Ground
     {
-        GameObject platformObj;
-        float anchorX_m = pixelsToMeters(1500);
-        float anchorY_m = pixelsToMeters(500); 
+        GameObject groundObj2;
+        float groundWidthM = pixelsToMeters(1000);
+        float groundHeightM = pixelsToMeters(300);
+        groundObj2.setPosition(pixelsToMeters(2000), - groundHeightM / 2.0f);
+        groundObj2.setSize(groundWidthM, groundHeightM);
+        groundObj2.setDynamic(false); // Sets density to 0
+        groundObj2.setColor(sf::Color::Green);
+        groundObj2.setFriction(0.7f);
+        groundObj2.setRestitution(0.1f);
+        groundObj2.setIsPlayerProperty(false);
+        groundObj2.setCanJumpOnProperty(true);
+        groundObj2.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
+
+        if (groundObj2.finalize(worldId)) {
+            gameObjects.push_back(groundObj2);
+        } else {
+            std::cerr << "Failed to create ground object in map1." << std::endl;
+        }
+    }
+
+    // Middle ground
+    {
+        GameObject groundObj3;
+        float groundWidthM = pixelsToMeters(1000);
+        float groundHeightM = pixelsToMeters(100);
+        groundObj3.setPosition(pixelsToMeters(1000), -pixelsToMeters(300));
+        groundObj3.setSize(groundWidthM, groundHeightM);
+        groundObj3.setDynamic(false); // Sets density to 0
+        groundObj3.setColor(sf::Color::Green);
+        groundObj3.setFriction(0.7f);
+        groundObj3.setRestitution(0.1f);
+        groundObj3.setIsPlayerProperty(false);
+        groundObj3.setCanJumpOnProperty(true);
+        groundObj3.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
+
+        if (groundObj3.finalize(worldId)) {
+            gameObjects.push_back(groundObj3);
+        } else {
+            std::cerr << "Failed to create middle ground object in map1." << std::endl;
+        }
+    }
+
+    // Stack of Pushable Boxes
+    {
+        const int numberOfBoxes = 50;
+        float boxSizeM = pixelsToMeters(40);    // Size of each box (width and height)
+        float boxX_m = pixelsToMeters(400);
+
+        float originalGroundReferenceY_m = pixelsToMeters(50);
+        float smallOffset_m = pixelsToMeters(1);
         
-        float platWidthM = pixelsToMeters(120);
-        float platHeightM = pixelsToMeters(20);
-        platformObj.setPosition(anchorX_m, anchorY_m - pixelsToMeters(150));
-        platformObj.setSize(platWidthM, platHeightM);
-        platformObj.setDynamic(true);
-        platformObj.setColor(sf::Color(160, 82, 45));
-        // platformObj.setFixedRotation(false); // Default
-        platformObj.setLinearDamping(0.5f);
-        platformObj.setDensity(1.0f); // Initial density, mass data will be set explicitly
-        platformObj.setFriction(0.7f);
-        platformObj.setRestitution(0.1f);
-        platformObj.setIsPlayerProperty(false);
-        platformObj.setCanJumpOnProperty(true);
-        platformObj.setCollidesWithPlayerProperty(true);
+        float firstBoxBottomY_m = originalGroundReferenceY_m + smallOffset_m;
 
-        if (platformObj.finalize(worldId)) {
-            platformBodyId = platformObj.bodyId;
-            gameObjects.push_back(platformObj);
+        for (int i = 0; i < numberOfBoxes; ++i) {
+            GameObject boxObj;
+            
+            float currentBoxBottomY_m = firstBoxBottomY_m + (i * boxSizeM);
+            float boxCenterY_m = currentBoxBottomY_m + (boxSizeM / 2.0f);
 
-            if (!B2_IS_NULL(platformBodyId)) {
-                b2MassData massData;
-                massData.mass = 2.34375f;
-                massData.center = {0.0f, 0.0f}; 
-                massData.rotationalInertia = 5.0f;
-                b2Body_SetMassData(platformBodyId, massData);
+            boxObj.setPosition(boxX_m, boxCenterY_m);
+            boxObj.setSize(boxSizeM, boxSizeM);
+            boxObj.setDynamic(true);
+            boxObj.setColor(sf::Color::Red);
+            boxObj.setLinearDamping(0.2f);  
+            boxObj.setDensity(0.2f);
+            boxObj.setFriction(0.7f);   
+            boxObj.setRestitution(0.1f);    
+            boxObj.setIsPlayerProperty(false);
+            boxObj.setCanJumpOnProperty(true);
+            boxObj.setCollidesWithPlayerProperty(true);
+
+            if (boxObj.finalize(worldId)) {
+                gameObjects.push_back(boxObj);
+            } else {
+                std::cerr << "Failed to create pushable box object " << i << " in stack for map1." << std::endl;
             }
-        } else {
-            std::cerr << "Failed to create hanging platform object in map1." << std::endl;
-        }
-    }
-    
-    // --- Create Segmented Rope for Hanging Platform ---
-    b2BodyId hangingAnchorBodyId = b2_nullBodyId;
-    {
-        GameObject anchorObj;
-        anchorObj.setPosition(pixelsToMeters(1500), pixelsToMeters(500));
-        anchorObj.setSize(pixelsToMeters(1), pixelsToMeters(1)); // Small, effectively invisible
-        anchorObj.setDynamic(false);
-        anchorObj.setColor(sf::Color::Transparent); // Invisible
-        // Default collision: CATEGORY_WORLD, MASK_PLAYER | CATEGORY_WORLD. Fine for a static anchor.
-        // Not jumpable, not player.
-        if (anchorObj.finalize(worldId)) {
-            gameObjects.push_back(anchorObj);
-            hangingAnchorBodyId = anchorObj.bodyId;
-        } else {
-            std::cerr << "Failed to create hanging anchor for rope." << std::endl;
         }
     }
 
-    const int numRopeSegments = 10;
-    float segmentThicknessM = pixelsToMeters(8); 
-
-    if (!B2_IS_NULL(hangingAnchorBodyId) && !B2_IS_NULL(platformBodyId)) {
-        b2Vec2 platformAttachPointLocal = {0.0f, pixelsToMeters(20) / 2.0f}; 
-        
-        createSegmentedRope(worldId, gameObjects,
-                            hangingAnchorBodyId, {0.0f, 0.0f}, 
-                            platformBodyId, platformAttachPointLocal, 
-                            numRopeSegments,
-                            0.0f, 
-                            segmentThicknessM,
-                            true, 
-                            sf::Color(139, 69, 19),
-                            0.2f, 0.05f, 0.5f, 0.1f,
-                            false, false); // segmentsCanBeJumpedOn=false, segmentsCollideWithPlayer=false (original intent)
-    }
-    // --- End Segmented Rope Creation for Hanging Platform ---
-    
-    // --- Create Horizontal Rope Bridge ---
-    const int numHSegments = 20; 
-    b2Vec2 leftAnchorPosWorld  = { pixelsToMeters(100), pixelsToMeters(200) };
-    b2Vec2 rightAnchorPosWorld = { pixelsToMeters(800), pixelsToMeters(200) };
-
-    b2BodyId leftBridgeAnchorBodyId = b2_nullBodyId;
-    {
-        GameObject anchorObj;
-        anchorObj.setPosition(leftAnchorPosWorld.x, leftAnchorPosWorld.y);
-        anchorObj.setSize(pixelsToMeters(1), pixelsToMeters(1));
-        anchorObj.setDynamic(false);
-        anchorObj.setColor(sf::Color::Transparent);
-        if (anchorObj.finalize(worldId)) {
-            gameObjects.push_back(anchorObj);
-            leftBridgeAnchorBodyId = anchorObj.bodyId;
-        } else {
-            std::cerr << "Failed to create left bridge anchor." << std::endl;
-        }
-    }
-
-    b2BodyId rightBridgeAnchorBodyId = b2_nullBodyId;
-    {
-        GameObject anchorObj;
-        anchorObj.setPosition(rightAnchorPosWorld.x, rightAnchorPosWorld.y);
-        anchorObj.setSize(pixelsToMeters(1), pixelsToMeters(1));
-        anchorObj.setDynamic(false);
-        anchorObj.setColor(sf::Color::Transparent);
-        if (anchorObj.finalize(worldId)) {
-            gameObjects.push_back(anchorObj);
-            rightBridgeAnchorBodyId = anchorObj.bodyId;
-        } else {
-            std::cerr << "Failed to create right bridge anchor." << std::endl;
-        }
-    }
-
-    float hSegmentThickness = pixelsToMeters(3); 
-
-    if (!B2_IS_NULL(leftBridgeAnchorBodyId) && !B2_IS_NULL(rightBridgeAnchorBodyId)) {
-        createSegmentedRope(worldId, gameObjects,
-                            leftBridgeAnchorBodyId, {0.0f, 0.0f},
-                            rightBridgeAnchorBodyId, {0.0f, 0.0f},
-                            numHSegments,
-                            0.0f, 
-                            hSegmentThickness,
-                            false, 
-                            sf::Color::Yellow,
-                            1.0f, 1.0f, 0.0f, 1.0f, // High damping, high density, no friction, high restitution for a "bouncy" bridge
-                            true, true); 
-    }
-    // --- End Horizontal Rope Bridge Creation ---
-
-    // --- Create Flag ---
-    // Place the flag somewhere in the map, e.g., near the right side
-    float flagX_m = pixelsToMeters(WINDOW_WIDTH - 150.0f);
-    float groundHeightM_val_for_flag = pixelsToMeters(50); // Assuming ground height is 50px
-    float flagHeight_m_val = pixelsToMeters(120.0f); // Flag's own height
-    float flagY_m = groundHeightM_val_for_flag + flagHeight_m_val / 2.0f; // Position flag on the ground
-    
-    createFlag(worldId, gameObjects, flagX_m, flagY_m);
-    // --- End Flag Creation ---
+    // Flag
+    float flagX_m = pixelsToMeters(1600.0f);
+    float flagY_m = pixelsToMeters(0.0f);
+    float flagHeight = pixelsToMeters(120.0f);
+    createFlag(worldId, gameObjects, flagX_m, flagY_m + flagHeight / 2.0f);
 
     return playerIndex;
 }
