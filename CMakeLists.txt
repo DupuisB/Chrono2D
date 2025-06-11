@@ -39,4 +39,4 @@ target_include_directories(sfml_blob PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
 
 # --- Link Your Executable Against SFML and Box2D Libraries ---
 # Links the 'sfml_blob' executable with the necessary SFML modules and the Box2D library.
-target_link_libraries(sfml_blob PRIVATE sfml-graphics sfml-window sfml-system box2d)
+target_link_libraries(sfml_blob PRIVATE sfml-graphics sfml-window sfml-system sfml-audio box2d)

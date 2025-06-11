@@ -5,6 +5,39 @@
 #include <cmath> // For std::abs, std::max, std::sqrt
 #include <algorithm> // For std::min, std::max
 #include <iostream>
+#include <SFML/Audio.hpp> // For sf::Music
+
+// Sound management
+sf::SoundBuffer jumpSoundBuffer;
+sf::SoundBuffer runningSoundBuffer;
+std::unique_ptr<sf::Sound> jumpSound;
+std::unique_ptr<sf::Sound> runningSound;
+bool soundsInitialized = false;
+
+void initializeSounds() {
+    if (!soundsInitialized) {
+        if (!jumpSoundBuffer.loadFromFile("../assets/audio/jumpsound.wav")) {
+            std::cerr << "Failed to load jump sound!" << std::endl;
+            return;
+        }
+        
+        if (!runningSoundBuffer.loadFromFile("../assets/audio/runningsound.wav")) {
+            std::cerr << "Failed to load running sound!" << std::endl;
+            return;
+        }
+        
+        // Créez les objets Sound avec les buffers
+        jumpSound = std::make_unique<sf::Sound>(jumpSoundBuffer);
+        runningSound = std::make_unique<sf::Sound>(runningSoundBuffer);
+        
+        // Configurez les sons
+        jumpSound->setVolume(15.0f);
+        runningSound->setLooping(true);
+        runningSound->setVolume(30.0f);
+        
+        soundsInitialized = true;
+    }
+}
 
 // Helper function to get the sign of a number
 inline float sign(float val) {
@@ -18,7 +51,6 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
                 bool jumpKeyHeld, bool leftKeyHeld, bool rightKeyHeld, float dt) {
 
     if (B2_IS_NULL(playerBodyId)) return;
-
     // --- Player Physics Parameters ---
     // Horizontal Movement
     static const float PLAYER_MAX_SPEED = 20.0f;
@@ -130,6 +162,12 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
         jumpBufferTimer = 0.0f;
         coyoteTimer = 0.0f;
         isGrounded = false;
+
+        // Play jump sound effect
+        if (jumpSound->getStatus() != sf::SoundSource::Status::Playing) {
+            jumpSound->play();
+        }
+
     }
 
     // --- Gravity Modification ---
@@ -207,4 +245,17 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     if (forceX != 0.0f) {
         b2Body_ApplyForceToCenter(playerBodyId, {forceX, 0.0f}, true);
     }
+
+
+    //Running sound logic
+    if (isGrounded && (leftKeyHeld || rightKeyHeld)) {
+        if (runningSound->getStatus() != sf::SoundSource::Status::Playing) {
+            runningSound->play();
+        }
+    } else {
+        if (runningSound->getStatus() == sf::SoundSource::Status::Playing) {
+            runningSound->stop();
+        }
+    }
+
 }
