@@ -6,7 +6,7 @@
 #include "include/constants.hpp"
 
 // --- Map Loading ---
-#include "maps/map1.hpp" // Change this to load different maps
+#include "maps/map2.hpp" // Change this to load different maps
 
 #include <vector>
 #include <cmath> 
@@ -57,7 +57,7 @@ int main() {
 
     // --- Load Map Objects ---
     // Populates gameObjects, playerBodyId, and playerIndex based on the selected map.
-    playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
+    playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
 
     // --- Initialize Player Animations ---
     if (playerIndex != -1) {
@@ -128,7 +128,7 @@ int main() {
         // --- Box2D Physics Step ---
         b2World_Step(worldId, dt, subSteps);
 
-        // --- Sensor Event Handling for Flag ---
+        // --- Sensor Event Handling for Flag and Tremplin ---
         if (!levelCompleted) {
             b2SensorEvents sensorEvents = b2World_GetSensorEvents(worldId);
             
@@ -155,10 +155,15 @@ int main() {
                         // Optional: Add further game end logic here (e.g., stop player, show message on screen)
                     }
                 }
+                if (objA && objB) {
+                    if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
+                        b2Vec2 impulse = {0, 10.0f};
+                        objB->applyImpulseToCenter(impulse);
+                    }
+                }
             }
             // Note: You might also want to handle sensorEvents.endEvents if needed
         }
-
 
         // --- Update Player Animation ---
         if (playerIndex != -1) {

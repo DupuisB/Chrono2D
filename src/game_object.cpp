@@ -149,6 +149,25 @@ void GameObject::setIsFlagProperty(bool isFlagProp) {
     // Filter update will happen in finalize or if setCollisionFilterData is called later
 }
 
+
+void GameObject::setIsTremplinProperty(bool isTremplinProp) {
+    isTremplin_prop_ = isTremplinProp;
+    if (isTremplin_prop_) {
+        categoryBits_ = CATEGORY_TREMPLIN;
+        maskBits_ = CATEGORY_PLAYER; // Flag collides with Player
+    } else {
+        // If it's not a flag, and also not a player, revert to default world object
+        if (!isPlayer_prop_) {
+            categoryBits_ = CATEGORY_WORLD;
+            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD;
+            if (!collidesWithPlayer_prop_) {
+                 maskBits_ = CATEGORY_WORLD;
+            }
+        }
+    }
+    // Filter update will happen in finalize or if setCollisionFilterData is called later
+}
+
 void GameObject::setSpriteTexturePath(const std::string& path) {
     spriteTexturePath_prop_ = path;
 }
@@ -230,6 +249,7 @@ bool GameObject::finalize(b2WorldId worldId) {
     this->isPlayer = isPlayer_prop_;
     this->canJumpOn = canJumpOn_prop_;
     this->isFlag_ = isFlag_prop_;
+    this->isTremplin = isTremplin_prop_;
 
     // Load generic sprite if path is provided and not a player object
     if (!isPlayer && !spriteTexturePath_prop_.empty()) {
@@ -374,6 +394,12 @@ void GameObject::draw(sf::RenderWindow& window) const {
         window.draw(sfShape);
     } else {
         // if (isFlag_prop_) std::cout << "Flag Not Drawn: No valid visual component." << std::endl;
+    }
+}
+
+void GameObject::applyImpulseToCenter(const b2Vec2& impulse) {
+    if (!B2_IS_NULL(bodyId) && isDynamic_val_) {
+        b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
     }
 }
 

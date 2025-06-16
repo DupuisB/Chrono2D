@@ -34,6 +34,7 @@ public:
     bool canJumpOn_prop_ {false}; // Property to guide setup
     bool collidesWithPlayer_prop_ {true}; // Property to guide setup
     bool isFlag_prop_ {false}; // Property to identify a flag object
+    bool isTremplin_prop_ {false}; //Property to identify a tremplin object
     bool isSensor_prop_ {false}; // Property to make the shape a sensor
     bool enableSensorEvents_prop_ {false}; // Property to enable sensor events for this shape
     uint64_t categoryBits_ {CATEGORY_WORLD}; // Changed to uint64_t
@@ -48,6 +49,7 @@ public:
     bool hasVisual;
     bool canJumpOn; // Actual gameplay flag, set during finalize
     bool isFlag_ {false}; // Actual flag, set during finalize
+    bool isTremplin {false};
 
     // Sprite and Animation specific (primarily for Player)
     std::optional<sf::Sprite> sprite;
@@ -94,10 +96,14 @@ public:
     void setCanJumpOnProperty(bool canJumpOnProp); // Sets the property used for initial setup
     void setCollidesWithPlayerProperty(bool collidesProp); // Sets the property used for initial setup
     void setIsFlagProperty(bool isFlagProp); // Sets the property for flag identification
+    void setIsTremplinProperty(bool isTremplinProp); // Sets the property for tremplin identification
     void setSpriteTexturePath(const std::string& path); // Sets path for generic sprite
     void setCollisionFilterData(uint64_t category, uint64_t mask); // Changed to uint64_t
     void setIsSensorProperty(bool isSensorProp); // Sets the property to make the shape a sensor
     void setEnableSensorEventsProperty(bool enableSensorEventsProp); // Sets property to enable sensor events
+
+    //Gameplay/Collision Modifiers
+    void applyImpulseToCenter(const b2Vec2& impulse); // Adds an impulse to the object
 
 
     // --- Finalization ---
