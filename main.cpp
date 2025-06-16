@@ -6,7 +6,8 @@
 #include "include/constants.hpp"
 
 // --- Map Loading ---
-#include "maps/map2.hpp" // Change this to load different maps
+#include "maps/map0.hpp" // Change this to load different maps
+#include "maps/map2.hpp"
 
 #include <vector>
 #include <cmath> 
@@ -16,6 +17,9 @@
 #include <iomanip>
 #include <filesystem> // Required for std::filesystem::current_path
 #include <SFML/Audio.hpp>
+#include <cstdint>
+
+
 
 // Helper function to find GameObject by shapeId
 GameObject* findGameObjectByShapeId(b2ShapeId shapeId, std::vector<GameObject>& gameObjects) {
@@ -55,24 +59,14 @@ int main() {
     b2BodyId playerBodyId = b2_nullBodyId;
     int playerIndex = -1;
 
-    // --- Load Map Objects ---
-    // Populates gameObjects, playerBodyId, and playerIndex based on the selected map.
-    playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
-
-    // --- Initialize Player Animations ---
-    if (playerIndex != -1) {
-        GameObject& playerObject = gameObjects[playerIndex];
-        std::string basePath = "../assets/sprite/character/Poses/";
-
-        playerObject.loadPlayerAnimation("idle", {basePath + "female_idle.png"}, 0.1f);
-        playerObject.loadPlayerAnimation("walk", {basePath + "female_walk1.png", basePath + "female_walk2.png"}, 0.15f);
-        playerObject.loadPlayerAnimation("jump", {basePath + "female_jump.png"}, 0.1f);
-        playerObject.loadPlayerAnimation("fall", {basePath + "female_fall.png"}, 0.1f);
-
-        playerObject.setPlayerAnimation("idle", false); // Initial state: idle, facing right
-    } else {
-        std::cerr << "Player object not found after map loading." << std::endl;
-    }
+    // --- Transition overlay ---
+    sf::RectangleShape transitionOverlay(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+    transitionOverlay.setFillColor(sf::Color(0, 0, 0, 0)); // Start transparent
+    bool isTransitioning = false;
+    bool isFadingOut = false;
+    bool isFadingIn = false;
+    float transitionAlpha = 0.0f;
+    const float TRANSITION_SPEED = 255.0f / 1.0f; // Full fade in 1 second
 
     // --- Load Background Music ---
     // Initialize sound system
@@ -91,109 +85,206 @@ int main() {
     backgroundMusic.play();
 
 
-    // --- Game Loop Variables ---
-    sf::Clock clock;
-    int32_t subSteps = 8;   // Number of physics sub-steps per frame
-    bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once
-
-
     // --- Main Game Loop ---
-    while (window.isOpen()) {
-        float elapsed_time = clock.restart().asSeconds();
-        float dt = UPDATE_DELTA;
 
-
-        // --- SFML Event Handling ---
-        bool jumpKeyHeld = false;
-        while (std::optional<sf::Event> event = window.pollEvent()) {
-            if (event) {
-                if (event->is<sf::Event::Closed>()) {
-                    window.close();
+    for( int level=1; level <= 2; ++level ) {
+            // Start fade in transition for new level
+        if (level > 1) {
+            // Clean up previous level
+            for (auto& obj : gameObjects) {
+                if (!B2_IS_NULL(obj.bodyId)) {
+                    b2DestroyBody(obj.bodyId);
                 }
             }
+            gameObjects.clear();
+            playerBodyId = b2_nullBodyId;
+            playerIndex = -1;
         }
 
-        // --- Input State Update ---
-        // Check current state of movement and jump keys
-        bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
-        bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
-        jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
-
-        // --- Player Movement ---
-        if (playerIndex != -1 && !B2_IS_NULL(playerBodyId)) {
-            movePlayer(worldId, playerBodyId, gameObjects[playerIndex], gameObjects, jumpKeyHeld,
-                      wantsToMoveLeft, wantsToMoveRight, dt);
+        if (level == 1) {
+            playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
+        } else if (level == 2) {
+            playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
+        }
+        
+        if (level > 1) {
+            isTransitioning = true;
+            isFadingOut = false;  // Make sure we're not fading out
+            isFadingIn = true;    // Set to fade in
+            transitionAlpha = 255.0f; // Start fully black
+            transitionOverlay.setFillColor(sf::Color(0, 0, 0, 255)); // Set to fully black
         }
 
-        // --- Box2D Physics Step ---
-        b2World_Step(worldId, dt, subSteps);
+            // --- Initialize Player Animations ---
+            if (playerIndex != -1) {
+                GameObject& playerObject = gameObjects[playerIndex];
+                std::string basePath = "../assets/sprite/character/Poses/";
 
-        // --- Sensor Event Handling for Flag and Tremplin ---
-        if (!levelCompleted) {
-            b2SensorEvents sensorEvents = b2World_GetSensorEvents(worldId);
-            
-            for (int i = 0; i < sensorEvents.beginCount; ++i) {
-                b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
-                GameObject* objA = findGameObjectByShapeId(event.sensorShapeId, gameObjects); // Shape that is the sensor
-                GameObject* objB = findGameObjectByShapeId(event.visitorShapeId, gameObjects); // Shape that entered the sensor
+                playerObject.loadPlayerAnimation("idle", {basePath + "female_idle.png"}, 0.1f);
+                playerObject.loadPlayerAnimation("walk", {basePath + "female_walk1.png", basePath + "female_walk2.png"}, 0.15f);
+                playerObject.loadPlayerAnimation("jump", {basePath + "female_jump.png"}, 0.1f);
+                playerObject.loadPlayerAnimation("fall", {basePath + "female_fall.png"}, 0.1f);
 
-                if (objA && objB) {
-                    bool playerHitFlag = false;
-                    // Check if one is player and the other is the flag sensor
-                    // Case 1: objA is the flag sensor, objB is the player
-                    if (objA->isFlag_prop_ && objA->isSensor_prop_ && objB->isPlayer) {
-                        playerHitFlag = true;
-                    } 
-                    // Case 2: objB is the flag sensor, objA is the player
-                    else if (objB->isFlag_prop_ && objB->isSensor_prop_ && objA->isPlayer) {
-                        playerHitFlag = true;
-                    }
+                playerObject.setPlayerAnimation("idle", false); // Initial state: idle, facing right
+            } else {
+                std::cerr << "Player object not found after map loading." << std::endl;
+            }
 
-                    if (playerHitFlag) {
-                        std::cout << "Level completed !" << std::endl;
-                        levelCompleted = true;
-                        // Optional: Add further game end logic here (e.g., stop player, show message on screen)
+            // --- Game Loop Variables ---
+            sf::Clock clock;
+            int32_t subSteps = 8;   // Number of physics sub-steps per frame
+            bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once   
+            while (window.isOpen()) {
+                float elapsed_time = clock.restart().asSeconds();
+                float dt = UPDATE_DELTA;
+
+                // --- SFML Event Handling ---
+                bool jumpKeyHeld = false;
+                while (std::optional<sf::Event> event = window.pollEvent()) {
+                    if (event) {
+                        if (event->is<sf::Event::Closed>()) {
+                            window.close();
+                        }
                     }
                 }
-                if (objA && objB) {
-                    if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
-                        b2Vec2 impulse = {0, 10.0f};
-                        objB->applyImpulseToCenter(impulse);
+
+
+                // --- Handle Transition ---
+                if (isTransitioning) {
+                    if (isFadingOut) {
+                        // Fade to black
+                        transitionAlpha += TRANSITION_SPEED * elapsed_time;
+                        if (transitionAlpha >= 255.0f) {
+                            transitionAlpha = 255.0f;
+                            isFadingOut = false;
+                            // Level completed, break to next level
+                            break;
+                        }
+                    } else if (isFadingIn) {
+                        // Fade from black
+                        transitionAlpha -= TRANSITION_SPEED * elapsed_time;
+                        if (transitionAlpha <= 0.0f) {
+                            transitionAlpha = 0.0f;
+                            isFadingIn = false;
+                            isTransitioning = false;
+                        }
                     }
+                    transitionOverlay.setFillColor(sf::Color(0, 0, 0, static_cast<std::uint8_t>(transitionAlpha)));
+                    
+                }
+
+
+                // --- Input State Update ---
+                // Check current state of movement and jump keys
+                bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
+                bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
+                jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
+
+                if(isTransitioning) {
+                    // If transitioning, ignore player input
+                    wantsToMoveLeft = false;
+                    wantsToMoveRight = false;
+                    jumpKeyHeld = false;
+                }
+
+                // --- Player Movement ---
+                if (playerIndex != -1 && !B2_IS_NULL(playerBodyId)) {
+                    movePlayer(worldId, playerBodyId, gameObjects[playerIndex], gameObjects, jumpKeyHeld,
+                            wantsToMoveLeft, wantsToMoveRight, dt);
+                }
+                // --- Box2D Physics Step ---
+                b2World_Step(worldId, dt, subSteps);
+                
+                // --- Sensor Event Handling for Flag and Tremplin ---
+                if (!levelCompleted) {
+                    b2SensorEvents sensorEvents = b2World_GetSensorEvents(worldId);
+                    
+                    for (int i = 0; i < sensorEvents.beginCount; ++i) {
+                        b2SensorBeginTouchEvent event = sensorEvents.beginEvents[i];
+                        GameObject* objA = findGameObjectByShapeId(event.sensorShapeId, gameObjects); // Shape that is the sensor
+                        GameObject* objB = findGameObjectByShapeId(event.visitorShapeId, gameObjects); // Shape that entered the sensor
+
+                        if (objA && objB) {
+                            bool playerHitFlag = false;
+                            // Check if one is player and the other is the flag sensor
+                            // Case 1: objA is the flag sensor, objB is the player
+                            if (objA->isFlag_prop_ && objA->isSensor_prop_ && objB->isPlayer) {
+                                playerHitFlag = true;
+                            } 
+                            // Case 2: objB is the flag sensor, objA is the player
+                            else if (objB->isFlag_prop_ && objB->isSensor_prop_ && objA->isPlayer) {
+                                playerHitFlag = true;
+                            }
+
+                            if (playerHitFlag) {
+                                std::cout << "Level completed !" << std::endl;
+                                levelCompleted = true;
+                                // Optional: Add further game end logic here (e.g., stop player, show message on screen)
+                            }
+                        }
+                        if (objA && objB) {
+                            if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
+                                b2Vec2 impulse = {0, 10.0f};
+                                objB->applyImpulseToCenter(impulse);
+                            }
+                        }
+                    }
+                    // Note: You might also want to handle sensorEvents.endEvents if needed
+                }
+
+
+                // --- Update Player Animation ---
+                if (playerIndex != -1) {
+                    gameObjects[playerIndex].updatePlayerAnimation(dt);
+                }
+
+                // --- Update SFML Graphics ---
+                for (auto& obj : gameObjects) {
+                    obj.updateShape();
+                }
+
+                // --- Camera Follow Player ---
+                if (!B2_IS_NULL(playerBodyId)) {
+                    b2Vec2 playerPos = b2Body_GetPosition(playerBodyId);
+                    sf::Vector2f center = b2VecToSfVec(playerPos);
+                    view.setCenter(center);
+                }
+                window.setView(view); 
+
+                // --- Rendering ---
+                window.clear(sf::Color(135, 206, 235));
+
+                // Draw all game objects
+                for (const auto& obj : gameObjects) {
+                    obj.draw(window);
+                }
+
+
+                window.setView(window.getDefaultView());
+                
+                if (isTransitioning || transitionAlpha > 0) {
+                    window.draw(transitionOverlay);
+                }
+                window.display();
+
+                // --- Check for Level Completion ---
+                if (levelCompleted) {
+                    isTransitioning = true;
+                    isFadingOut = true;
                 }
             }
-            // Note: You might also want to handle sensorEvents.endEvents if needed
+            // Reset gameObjects for the next level
+            gameObjects.clear();
+            playerBodyId = b2_nullBodyId;
+            playerIndex = -1;
+            levelCompleted = false; // Reset for the next level
+            // Reset the Box2D world for the next level
+            b2DestroyWorld(worldId);
+            worldId = b2CreateWorld(&worldDef);
+
+
+
         }
-
-        // --- Update Player Animation ---
-        if (playerIndex != -1) {
-            gameObjects[playerIndex].updatePlayerAnimation(dt);
-        }
-
-        // --- Update SFML Graphics ---
-        for (auto& obj : gameObjects) {
-            obj.updateShape();
-        }
-
-        // --- Camera Follow Player ---
-        if (!B2_IS_NULL(playerBodyId)) {
-            b2Vec2 playerPos = b2Body_GetPosition(playerBodyId);
-            sf::Vector2f center = b2VecToSfVec(playerPos);
-            view.setCenter(center);
-        }
-        window.setView(view); 
-
-        // --- Rendering ---
-        window.clear(sf::Color(135, 206, 235));
-
-        // Draw all game objects
-        for (const auto& obj : gameObjects) {
-            obj.draw(window);
-        }
-
-        window.display();
-    }
-
     // --- Cleanup ---
     // Destroy the Box2D world and all bodies/shapes within it.
     if (!B2_IS_NULL(worldId)) {
