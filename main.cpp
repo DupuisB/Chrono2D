@@ -15,6 +15,7 @@
 #include <numeric>
 #include <iomanip>
 #include <filesystem> // Required for std::filesystem::current_path
+#include <SFML/Audio.hpp>
 
 // Helper function to find GameObject by shapeId
 GameObject* findGameObjectByShapeId(b2ShapeId shapeId, std::vector<GameObject>& gameObjects) {
@@ -72,6 +73,22 @@ int main() {
     } else {
         std::cerr << "Player object not found after map loading." << std::endl;
     }
+
+    // --- Load Background Music ---
+    // Initialize sound system
+    initializeSounds();
+    // Create a music object
+    sf::Music backgroundMusic;
+    // Load the music file
+    if (!backgroundMusic.openFromFile("../assets/audio/backgroundmusic.ogg")) {
+        std::cerr << "Failed to load background music!" << std::endl;
+        return -1;
+    }
+    // Set music properties
+    backgroundMusic.setLooping(true); // Enable looping
+    backgroundMusic.setVolume(10); // Set volume (0 to 100)
+    // Play the music
+    backgroundMusic.play();
 
 
     // --- Game Loop Variables ---

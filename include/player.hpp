@@ -30,4 +30,6 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
                 const std::vector<GameObject>& allGameObjects,
                 bool jumpKeyHeld, bool leftKeyHeld, bool rightKeyHeld, float dt);
 
+void initializeSounds();
+
 #endif // PLAYER_HPP
