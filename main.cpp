@@ -225,7 +225,13 @@ int main() {
                         if (objA && objB) {
                             if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
                                 b2Vec2 impulse = {0, 10.0f};
-                                objB->applyImpulseToCenter(impulse);
+                                objB->setPendingImpulsion(impulse);
+                                std::cout << "impulseB, dynamic:"<< objB->isDynamic_val_ << " et densité :"<< objB->density_val_ << " et vitesse: "<<std::endl;
+                            }
+                            else if (objB->isTremplin_prop_ && objB->isSensor_prop_ && objA->isDynamic_val_) {
+                                b2Vec2 impulse = {0, 10.0f};
+                                objA->setPendingImpulsion(impulse);
+                                std::cout << "impulseA" <<std::endl;
                             }
                         }
                     }

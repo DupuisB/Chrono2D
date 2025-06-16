@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 
+
 /**
  * @brief Creates a segmented rope connecting two bodies.
  *
@@ -29,17 +30,18 @@
  * @param segmentsCollideWithPlayer Should player collide with these rope segments? (default: true)
  * @return True if the rope was created successfully, false otherwise.
  */
-inline b2BodyId createTremplin(
+inline void createTremplin(
     b2WorldId worldId,
     std::vector<GameObject>& gameObjects,
     bool is_dynamic,
     float x_m, float y_m) {
 
     GameObject tremplinObj;
+    GameObject tremplinSensor;
 
-    // Tremplin dimensions (140x80 pixels)
+    // Tremplin dimensions (140x50 pixels)
     float tremplinWidthM = pixelsToMeters(140.0f);
-    float tremplinHeightM = pixelsToMeters(80.0f);
+    float tremplinHeightM = pixelsToMeters(50.0f);
 
     tremplinObj.setPosition(x_m, y_m);
     tremplinObj.setSize(tremplinWidthM, tremplinHeightM);
@@ -48,26 +50,39 @@ inline b2BodyId createTremplin(
     
     tremplinObj.setCanJumpOnProperty(true);
     tremplinObj.setSpriteTexturePath("../assets/sprite/objects/tremplin-1.png"); // Path to tremplin image
-    tremplinObj.setIsTremplinProperty(true);
-    tremplinObj.setIsSensorProperty(true); // Make the tremplin a sensor
-    tremplinObj.setEnableSensorEventsProperty(true); // Enable sensor events for the tremplin
+    tremplinObj.setCollidesWithPlayerProperty(true);
+    //tremplinObj.setIsTremplinProperty(true);
+    //tremplinObj.setIsSensorProperty(true); // Make the tremplin a sensor
+    //tremplinObj.setEnableSensorEventsProperty(true); // Enable sensor events for the tremplin
 
     // Default physics properties for a static sensor-like object
     tremplinObj.setFriction(0.7f);
-    tremplinObj.setRestitution(0.0f);
+    tremplinObj.setRestitution(0.1f);
     
     // Collision properties are handled by setIstremplinProperty and setIsPlayerProperty
+
+
+
+    tremplinSensor.setPosition(x_m , y_m+tremplinHeightM/2+pixelsToMeters(2));
+    tremplinSensor.setSize(tremplinWidthM*2/3, pixelsToMeters(2));
+    tremplinSensor.setDynamic(is_dynamic);
+
+    tremplinSensor.setColor(sf::Color::Transparent);
+    tremplinSensor.setIsTremplinProperty(true);
+    tremplinSensor.setIsSensorProperty(true);
+    tremplinSensor.setEnableSensorEventsProperty(true);
 
     if (tremplinObj.finalize(worldId)) {
         gameObjects.push_back(tremplinObj);
         GameObject& actualtremplinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
         actualtremplinInVector.ensureCorrectSpriteTextureLink(); 
-
-        return actualtremplinInVector.bodyId; // Return the bodyId of the object in the vector
     }
-    std::cerr << "Failed to create tremplin object." << std::endl;
-    return b2_nullBodyId;
-}
+
+    if (tremplinSensor.finalize(worldId)) {
+        gameObjects.push_back(tremplinSensor);
+    }
+
+}  
 
 
 #endif // TREMPLIN_HPP

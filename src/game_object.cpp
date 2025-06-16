@@ -75,17 +75,21 @@ void GameObject::setRestitution(float r) {
     }
 }
 
+void GameObject::setPendingImpulsion(b2Vec2 impulse) {
+    pendingImpulsion = impulse;
+}
+
 void GameObject::setIsPlayerProperty(bool isPlayerProp) {
     isPlayer_prop_ = isPlayerProp;
     // This might also influence default collision filter bits if called before finalize
     if (isPlayer_prop_) {
         categoryBits_ = CATEGORY_PLAYER;
-        maskBits_ = CATEGORY_WORLD | CATEGORY_FLAG; // Player collides with world and flag
+        maskBits_ = CATEGORY_WORLD | CATEGORY_FLAG | CATEGORY_TREMPLIN; // Player collides with world and flag and tremplin
     } else {
         // Revert to default world object if it was player before
         // This logic depends on how you want setIsPlayerProperty to behave regarding filters
         categoryBits_ = CATEGORY_WORLD;
-        maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD; // Default for world object
+        maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD | CATEGORY_TREMPLIN; // Default for world object
         if (!collidesWithPlayer_prop_) { // If it shouldn't collide with player
              maskBits_ = CATEGORY_WORLD;
         }
@@ -114,7 +118,7 @@ void GameObject::setCollidesWithPlayerProperty(bool collidesProp) {
     collidesWithPlayer_prop_ = collidesProp;
     if (!isPlayer_prop_) { // Only relevant if this object is not the player itself
         if (collidesWithPlayer_prop_) {
-            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD; // Default: collides with player and world
+            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD | CATEGORY_TREMPLIN; // Default: collides with player and world
             if (isFlag_prop_) { // If it's a flag, it specifically collides with player
                 maskBits_ = CATEGORY_PLAYER;
             }
@@ -140,11 +144,11 @@ void GameObject::setIsFlagProperty(bool isFlagProp) {
         // If it's not a flag, and also not a player, revert to default world object
         if (!isPlayer_prop_) {
             categoryBits_ = CATEGORY_WORLD;
-            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD;
+            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD | CATEGORY_TREMPLIN;
             if (!collidesWithPlayer_prop_) {
                  maskBits_ = CATEGORY_WORLD;
             }
-        }
+         }
     }
     // Filter update will happen in finalize or if setCollisionFilterData is called later
 }
@@ -154,12 +158,12 @@ void GameObject::setIsTremplinProperty(bool isTremplinProp) {
     isTremplin_prop_ = isTremplinProp;
     if (isTremplin_prop_) {
         categoryBits_ = CATEGORY_TREMPLIN;
-        maskBits_ = CATEGORY_PLAYER; // Flag collides with Player
+        maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD;// Tremplin collides with Player and objects
     } else {
-        // If it's not a flag, and also not a player, revert to default world object
+        // If it's not a tremplin, and also not a player, revert to default world object
         if (!isPlayer_prop_) {
             categoryBits_ = CATEGORY_WORLD;
-            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD;
+            maskBits_ = CATEGORY_PLAYER | CATEGORY_WORLD | CATEGORY_TREMPLIN;
             if (!collidesWithPlayer_prop_) {
                  maskBits_ = CATEGORY_WORLD;
             }
@@ -355,8 +359,15 @@ void GameObject::updatePlayerAnimation(float dt) {
 void GameObject::updateShape() {
     if (B2_IS_NULL(bodyId)) return;
 
+    if (isDynamic_val_) {
+        b2Body_ApplyLinearImpulseToCenter(bodyId, pendingImpulsion, true);
+        setPendingImpulsion(b2Vec2{pendingImpulsion.x/1.1f, pendingImpulsion.y/1.1f});
+    };
+
     b2Transform transform = b2Body_GetTransform(bodyId);
     sf::Vector2f sfmlPos = b2VecToSfVec(transform.p);
+
+
 
     // Update sfShape (can be used for non-player objects or as debug visual)
     if (hasVisual) {
@@ -397,11 +408,6 @@ void GameObject::draw(sf::RenderWindow& window) const {
     }
 }
 
-void GameObject::applyImpulseToCenter(const b2Vec2& impulse) {
-    if (!B2_IS_NULL(bodyId) && isDynamic_val_) {
-        b2Body_ApplyLinearImpulseToCenter( bodyId, impulse, true );
-    }
-}
 
 /**
  * @brief Checks if the GameObject has a valid Box2D body.

@@ -38,7 +38,8 @@ public:
     bool isSensor_prop_ {false}; // Property to make the shape a sensor
     bool enableSensorEvents_prop_ {false}; // Property to enable sensor events for this shape
     uint64_t categoryBits_ {CATEGORY_WORLD}; // Changed to uint64_t
-    uint64_t maskBits_ {CATEGORY_PLAYER | CATEGORY_WORLD}; // Changed to uint64_t
+    uint64_t maskBits_ {CATEGORY_PLAYER | CATEGORY_WORLD | CATEGORY_TREMPLIN}; // Changed to uint64_t
+    b2Vec2 pendingImpulsion {b2Vec2{0.0f,0.0f}}; //Memorizes if some impulsion must be applied to the object
 
 
     // --- SFML/Box2D members ---
@@ -101,9 +102,7 @@ public:
     void setCollisionFilterData(uint64_t category, uint64_t mask); // Changed to uint64_t
     void setIsSensorProperty(bool isSensorProp); // Sets the property to make the shape a sensor
     void setEnableSensorEventsProperty(bool enableSensorEventsProp); // Sets property to enable sensor events
-
-    //Gameplay/Collision Modifiers
-    void applyImpulseToCenter(const b2Vec2& impulse); // Adds an impulse to the object
+    void setPendingImpulsion(b2Vec2 impulsion); // Sets the pending impulsion
 
 
     // --- Finalization ---

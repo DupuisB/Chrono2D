@@ -167,7 +167,7 @@ inline int loadMap2(b2WorldId worldId,
 
     // --- Create Tremplin ---
     {
-        createTremplin(worldId, gameObjects, false, pixelsToMeters(860), pixelsToMeters(90));
+        createTremplin(worldId, gameObjects, false, pixelsToMeters(930), pixelsToMeters(75));
     }
     // --- End Tremplin ---
     
