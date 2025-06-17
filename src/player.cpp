@@ -63,6 +63,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     static const float PLAYER_JUMP_HEIGHT = 5.0f;
     static const float PLAYER_TIME_TO_JUMP_APEX = 0.6f;
 
+
     // Gravity Modification
     static const float PLAYER_FALL_GRAVITY_FACTOR = 5.0f;
     static const float PLAYER_JUMP_CUT_GRAVITY_FACTOR = 2.5f;
@@ -72,8 +73,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     static const float PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE = (2.0f * PLAYER_JUMP_HEIGHT) / (PLAYER_TIME_TO_JUMP_APEX * PLAYER_TIME_TO_JUMP_APEX);
     static const float PLAYER_INITIAL_JUMP_VELOCITY = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE * PLAYER_TIME_TO_JUMP_APEX;
     static const float PLAYER_BASE_GRAVITY_SCALE = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE / WORLD_GRAVITY_MAGNITUDE;
-
-    static const float PLAYER_COYOTE_TIME = 0.5f;
+    static const float PLAYER_COYOTE_TIME = 0.3f;
     static const float PLAYER_JUMP_BUFFER_TIME = 0.1f;
 
 
@@ -84,6 +84,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     static float coyoteTimer = PLAYER_COYOTE_TIME;
     static float jumpBufferTimer = PLAYER_JUMP_BUFFER_TIME;
     static bool previousJumpKeyHeld = false;
+    b2Vec2 playerVel=b2Body_GetLinearVelocity(playerBodyId);
 
     // --- Input Processing ---
     bool jumpKeyJustPressed = jumpKeyHeld && !previousJumpKeyHeld;
@@ -99,45 +100,47 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
 
     // --- Ground Check ---
     wasGroundedLastFrame = isGrounded;
-    isGrounded = false;
-    b2ContactData contactData[10];
-    int count = b2Body_GetContactData(playerBodyId, contactData, 10);
-    for (int i = 0; i < count; ++i) {
-        if (contactData[i].manifold.pointCount > 0) {
-            b2BodyId bodyA = b2Shape_GetBody(contactData[i].shapeIdA);
-            b2BodyId bodyB = b2Shape_GetBody(contactData[i].shapeIdB);
-            b2BodyId otherBodyId = b2_nullBodyId;
-            float supportingNormalY = 0.0f;
+    if(!wasGroundedLastFrame && playerVel.y > 0.01f) {
+        isGrounded = false; 
+    } else {
+        
+        isGrounded = false;
+        b2ContactData contactData[10];
+        int count = b2Body_GetContactData(playerBodyId, contactData, 10);
+        for (int i = 0; i < count; ++i) {
+            if (contactData[i].manifold.pointCount > 0) {
+                b2BodyId bodyA = b2Shape_GetBody(contactData[i].shapeIdA);
+                b2BodyId bodyB = b2Shape_GetBody(contactData[i].shapeIdB);
+                b2BodyId otherBodyId = b2_nullBodyId;
+                float supportingNormalY = 0.0f;
 
-            if (B2_ID_EQUALS(bodyA, playerBodyId)) {
-                otherBodyId = bodyB;
-                supportingNormalY = -contactData[i].manifold.normal.y;
-            } else if (B2_ID_EQUALS(bodyB, playerBodyId)) {
-                otherBodyId = bodyA;
-                supportingNormalY = contactData[i].manifold.normal.y;
-            } else {
-                continue;
-            }
-
-            // Check if the other body is a GameObject that can be jumped on
-            for(const auto& gameObject : allGameObjects) { // Use allGameObjects for ground check
-                if (B2_ID_EQUALS(otherBodyId, gameObject.bodyId)) {
-                    if (gameObject.canJumpOn && supportingNormalY > 0.7f) { // Check if contact normal is mostly upward
-                        isGrounded = true;
-                    }
-                    break;
+                if (B2_ID_EQUALS(bodyA, playerBodyId)) {
+                    otherBodyId = bodyB;
+                    supportingNormalY = -contactData[i].manifold.normal.y;
+                } else if (B2_ID_EQUALS(bodyB, playerBodyId)) {
+                    otherBodyId = bodyA;
+                    supportingNormalY = contactData[i].manifold.normal.y;
+                } else {
+                    continue;
                 }
+
+                // Check if the other body is a GameObject that can be jumped on
+                for(const auto& gameObject : allGameObjects) { // Use allGameObjects for ground check
+                    if (B2_ID_EQUALS(otherBodyId, gameObject.bodyId)) {
+                        if (gameObject.canJumpOn && supportingNormalY > 0.7f) { // Check if contact normal is mostly upward
+                            isGrounded = true;
+                        }
+                        break;
+                    }
+                }
+                if (isGrounded) break;
             }
-            if (isGrounded) break;
         }
     }
-
     // Update Coyote Time & Jump State
     if (isGrounded) {
         coyoteTimer = PLAYER_COYOTE_TIME;
-        if (isJumping) {
-             isJumping = false;
-        }
+        isJumping=false;
     } else {
         coyoteTimer = std::max(0.0f, coyoteTimer - dt);
     }
@@ -156,8 +159,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     bool tryJumpFromBuffer = justLanded && (jumpBufferTimer > 0.0f);
 
     if (tryJumpFromBuffer || (jumpKeyJustPressed && canJumpFromState)) {
-        b2Vec2 currentVel = b2Body_GetLinearVelocity(playerBodyId);
-        b2Body_SetLinearVelocity(playerBodyId, {currentVel.x, PLAYER_INITIAL_JUMP_VELOCITY});
+        b2Body_SetLinearVelocity(playerBodyId, {playerVel.x, PLAYER_INITIAL_JUMP_VELOCITY});
         isJumping = true;
         jumpBufferTimer = 0.0f;
         coyoteTimer = 0.0f;
@@ -171,11 +173,15 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     }
 
     // --- Gravity Modification ---
-    b2Vec2 playerVel = b2Body_GetLinearVelocity(playerBodyId);
     float currentGravityScale = PLAYER_BASE_GRAVITY_SCALE;
 
-    if (isJumping && playerVel.y > 0.01f && !jumpKeyHeld) {
+    if (isJumping && playerVel.y > 0.01f ) {
+        if(jumpKeyHeld){
+            currentGravityScale = PLAYER_BASE_GRAVITY_SCALE;
+        }
+        else{
         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE * PLAYER_JUMP_CUT_GRAVITY_FACTOR;
+        }
     } else if (playerVel.y < -0.01f) {
         currentGravityScale = PLAYER_BASE_GRAVITY_SCALE * PLAYER_FALL_GRAVITY_FACTOR;
     }
@@ -257,5 +263,8 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
             runningSound->stop();
         }
     }
+    std::cout << "coyoteTimer: " << coyoteTimer << ", jumpBufferTimer: " << jumpBufferTimer << std::endl;
+    std::cout << "isGrounded: " << isGrounded << ", wasGroundedLastFrame: " << wasGroundedLastFrame << std::endl;
+    std::cout << "isJumping: " << isJumping << ", jumpKeyJustPressed: " << jumpKeyJustPressed << std::endl;
 
 }
