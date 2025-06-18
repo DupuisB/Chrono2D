@@ -73,7 +73,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
     static const float PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE = (2.0f * PLAYER_JUMP_HEIGHT) / (PLAYER_TIME_TO_JUMP_APEX * PLAYER_TIME_TO_JUMP_APEX);
     static const float PLAYER_INITIAL_JUMP_VELOCITY = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE * PLAYER_TIME_TO_JUMP_APEX;
     static const float PLAYER_BASE_GRAVITY_SCALE = PLAYER_EFFECTIVE_GRAVITY_MAGNITUDE / WORLD_GRAVITY_MAGNITUDE;
-    static const float PLAYER_COYOTE_TIME = 0.3f;
+    static const float PLAYER_COYOTE_TIME = 0.0f;
     static const float PLAYER_JUMP_BUFFER_TIME = 0.1f;
 
 
@@ -100,7 +100,7 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
 
     // --- Ground Check ---
     wasGroundedLastFrame = isGrounded;
-    if(!wasGroundedLastFrame && playerVel.y > 0.01f) {
+    if(!wasGroundedLastFrame && playerVel.y > 0.01f && jumpKeyHeld) {
         isGrounded = false; 
     } else {
         
@@ -263,8 +263,5 @@ void movePlayer(b2WorldId worldId, b2BodyId playerBodyId, GameObject& playerGame
             runningSound->stop();
         }
     }
-    std::cout << "coyoteTimer: " << coyoteTimer << ", jumpBufferTimer: " << jumpBufferTimer << std::endl;
-    std::cout << "isGrounded: " << isGrounded << ", wasGroundedLastFrame: " << wasGroundedLastFrame << std::endl;
-    std::cout << "isJumping: " << isJumping << ", jumpKeyJustPressed: " << jumpKeyJustPressed << std::endl;
 
 }
