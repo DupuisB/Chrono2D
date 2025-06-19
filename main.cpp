@@ -84,7 +84,10 @@ int main() {
     // Play the music
     backgroundMusic.play();
 
-
+    // --- Time Freeze State ---
+    static bool timeFreeze = false;
+    static bool wasInTimeFreeze = false;
+    static std::vector<std::tuple<b2BodyId, b2BodyType, b2Vec2, float>> frozenBodyData;
     // --- Main Game Loop ---
 
     for( int level=1; level <= 2; ++level ) {
@@ -99,6 +102,9 @@ int main() {
             gameObjects.clear();
             playerBodyId = b2_nullBodyId;
             playerIndex = -1;
+            timeFreeze = false; // Reset time freeze state
+            wasInTimeFreeze = false; // Reset previous time freeze state
+            frozenBodyData.clear(); // Clear frozen body data
         }
 
         if (level == 1) {
@@ -189,7 +195,7 @@ int main() {
                 prevFKeyState = currFKeyState;
 
                 // --- Time Freeze Logic ---
-                static bool timeFreeze = false;
+                
                 if (wantsToTimeFreeze) {
                     timeFreeze = !timeFreeze; // Toggle time freeze
                     if (timeFreeze) {
@@ -215,8 +221,7 @@ int main() {
                 }
 
                 // Add these vectors to store original body types
-                static bool wasInTimeFreeze = false;
-                static std::vector<std::tuple<b2BodyId, b2BodyType, b2Vec2, float>> frozenBodyData;
+                
 
                 if(!timeFreeze){
                     // Just exited freeze mode - restore original body types AND velocities
