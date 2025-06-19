@@ -31,7 +31,7 @@ void initializeSounds() {
         runningSound = std::make_unique<sf::Sound>(runningSoundBuffer);
         
         // Configurez les sons
-        jumpSound->setVolume(15.0f);
+        jumpSound->setVolume(5.0f);
         runningSound->setLooping(true);
         runningSound->setVolume(30.0f);
         

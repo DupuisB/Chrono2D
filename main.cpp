@@ -59,6 +59,11 @@ int main() {
     b2BodyId playerBodyId = b2_nullBodyId;
     int playerIndex = -1;
 
+    // --- Time Freeze State ---
+    static bool timeFreeze = false;
+    static bool wasInTimeFreeze = false;
+    static std::vector<std::tuple<b2BodyId, b2BodyType, b2Vec2, float>> frozenBodyData;
+
     // --- Transition overlay ---
     sf::RectangleShape transitionOverlay(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
     transitionOverlay.setFillColor(sf::Color(0, 0, 0, 0)); // Start transparent
@@ -68,9 +73,41 @@ int main() {
     float transitionAlpha = 0.0f;
     const float TRANSITION_SPEED = 255.0f / 1.0f; // Full fade in 1 second
 
+    // --- TimeFreeze overlay ---
+    sf::RectangleShape timeFreezeOverlay(sf::Vector2f(WINDOW_WIDTH, WINDOW_HEIGHT));
+    timeFreezeOverlay.setFillColor(sf::Color(0, 0, 0, 0)); // Start transparent
+    bool isTimeFreezeTransitioning = false;
+    bool isTimeFreezeOverlayFadingIn = false;
+    bool isTimeFreezeOverlayFadingOut = false;
+    float timeFreezeOverlayAlpha = 0.0f;
+    const float TIMEFREEZE_FADE_SPEED = 255.0f / 1.0f; 
+
     // --- Load Background Music ---
     // Initialize sound system
     initializeSounds();
+    sf::SoundBuffer timeFreezeSoundBuffer;
+    sf::SoundBuffer timeUnfreezeSoundBuffer;
+    std::unique_ptr<sf::Sound> timeUnfreezeSound;
+    std::unique_ptr<sf::Sound> timeFreezeSound;
+    bool soundsInitialized = false;
+    if (!timeFreezeSoundBuffer.loadFromFile("../assets/audio/timefreezesound.wav")) {
+        std::cerr << "Failed to load time freeze sound!" << std::endl;
+        return -1;
+    }
+    if (!timeUnfreezeSoundBuffer.loadFromFile("../assets/audio/timeunfreezesound.wav")) {
+        std::cerr << "Failed to load time unfreeze sound!" << std::endl;
+        return -1;
+    }
+      
+    // Create sound objects
+    timeFreezeSound = std::make_unique<sf::Sound>(timeFreezeSoundBuffer);
+    timeUnfreezeSound = std::make_unique<sf::Sound>(timeUnfreezeSoundBuffer);
+    // Configure sounds
+    timeFreezeSound->setVolume(25.0f);
+    timeUnfreezeSound->setVolume(25.0f);
+    timeFreezeSound->setPitch(2.0f);
+    timeUnfreezeSound->setPitch(2.0f);
+
     // Create a music object
     sf::Music backgroundMusic;
     // Load the music file
@@ -84,10 +121,7 @@ int main() {
     // Play the music
     backgroundMusic.play();
 
-    // --- Time Freeze State ---
-    static bool timeFreeze = false;
-    static bool wasInTimeFreeze = false;
-    static std::vector<std::tuple<b2BodyId, b2BodyType, b2Vec2, float>> frozenBodyData;
+    
     // --- Main Game Loop ---
 
     for( int level=1; level <= 2; ++level ) {
@@ -178,7 +212,27 @@ int main() {
                     transitionOverlay.setFillColor(sf::Color(0, 0, 0, static_cast<std::uint8_t>(transitionAlpha)));
                     
                 }
-
+                if (isTimeFreezeTransitioning) {
+                    if (isTimeFreezeOverlayFadingIn) {
+                        timeFreezeOverlayAlpha += TIMEFREEZE_FADE_SPEED * elapsed_time;
+                        if (timeFreezeOverlayAlpha >= 50.0f ) { // Max alpha for time freeze (semi-transparent)
+                            timeFreezeOverlayAlpha = 50.0f;
+                            isTimeFreezeOverlayFadingIn = false;
+                            isTimeFreezeTransitioning = false;
+                        }
+                    } else if (isTimeFreezeOverlayFadingOut) {
+                        timeFreezeOverlayAlpha -= TIMEFREEZE_FADE_SPEED * elapsed_time;
+                        if (timeFreezeOverlayAlpha <= 0.0f) {
+                            timeFreezeOverlayAlpha = 0.0f;
+                            isTimeFreezeOverlayFadingOut = false;
+                            isTimeFreezeTransitioning = false;
+                            timeFreeze = false; // Actually disable time freeze after fade out
+                        }
+                    }
+                    
+                    // Update overlay color with current alpha
+                    timeFreezeOverlay.setFillColor(sf::Color(100, 150, 255, static_cast<std::uint8_t>(timeFreezeOverlayAlpha))); // Light blue tint
+                }
 
                 // --- Input State Update ---
                 // Check current state of movement and jump keys
@@ -197,11 +251,25 @@ int main() {
                 // --- Time Freeze Logic ---
                 
                 if (wantsToTimeFreeze) {
-                    timeFreeze = !timeFreeze; // Toggle time freeze
-                    if (timeFreeze) {
-                        std::cout << "Time frozen." << std::endl;
-                    } else {
-                        std::cout << "Time unfrozen." << std::endl;
+                    if (!timeFreeze) {
+                        // Starting time freeze - begin fade in
+                        timeFreeze = true;
+                        isTimeFreezeTransitioning = true;
+                        isTimeFreezeOverlayFadingIn = true;
+                        isTimeFreezeOverlayFadingOut = false;
+                        if (timeFreezeSound && timeFreezeSound->getStatus() != sf::SoundSource::Status::Playing) {
+                            timeFreezeSound->play();
+                        }
+                        std::cout << "Time frozen - fading in overlay." << std::endl;
+                    } else if (!isTimeFreezeTransitioning) {
+                        // Ending time freeze - begin fade out
+                        isTimeFreezeTransitioning = true;
+                        isTimeFreezeOverlayFadingOut = true;
+                        isTimeFreezeOverlayFadingIn = false;
+                        if (timeUnfreezeSound && timeUnfreezeSound->getStatus() != sf::SoundSource::Status::Playing) {
+                            timeUnfreezeSound->play();
+                        }
+                        std::cout << "Time unfrozen - fading out overlay." << std::endl;
                     }
                 }
 
@@ -360,16 +428,28 @@ int main() {
                 window.clear(sf::Color(135, 206, 235));
 
                 // Draw all game objects
-                for (const auto& obj : gameObjects) {
-                    obj.draw(window);
+                for (size_t i = 0; i < gameObjects.size(); ++i) {
+                    if (i != playerIndex) {  // Don't draw player yet
+                        gameObjects[i].draw(window);
+                    }
+                }
+                window.setView(window.getDefaultView());
+                
+                if (timeFreezeOverlayAlpha > 0.0f) {
+                    window.draw(timeFreezeOverlay);
                 }
 
+                window.setView(view); 
 
+                if (playerIndex != -1) {
+                    gameObjects[playerIndex].draw(window);
+                }
                 window.setView(window.getDefaultView());
                 
                 if (isTransitioning || transitionAlpha > 0) {
                     window.draw(transitionOverlay);
                 }
+
                 window.display();
 
                 // --- Check for Level Completion ---
