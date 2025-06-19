@@ -176,24 +176,118 @@ int main() {
 
                 // --- Input State Update ---
                 // Check current state of movement and jump keys
-                bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left);
-                bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right);
-                jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space);
+                bool wantsToMoveLeft = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Q);
+                bool wantsToMoveRight = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D);
+                jumpKeyHeld = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Z);
+                // Detect F key just pressed for time freeze toggle
+                static bool prevFKeyState = false;
+                bool currFKeyState = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::F);
+                bool wantsToTimeFreeze = false;
+                if (currFKeyState && !prevFKeyState) {
+                    wantsToTimeFreeze = true;
+                }
+                prevFKeyState = currFKeyState;
+
+                // --- Time Freeze Logic ---
+                static bool timeFreeze = false;
+                if (wantsToTimeFreeze) {
+                    timeFreeze = !timeFreeze; // Toggle time freeze
+                    if (timeFreeze) {
+                        std::cout << "Time frozen." << std::endl;
+                    } else {
+                        std::cout << "Time unfrozen." << std::endl;
+                    }
+                }
 
                 if(isTransitioning) {
                     // If transitioning, ignore player input
                     wantsToMoveLeft = false;
                     wantsToMoveRight = false;
                     jumpKeyHeld = false;
+                    wantsToTimeFreeze = false;
                 }
+                
 
                 // --- Player Movement ---
                 if (playerIndex != -1 && !B2_IS_NULL(playerBodyId)) {
                     movePlayer(worldId, playerBodyId, gameObjects[playerIndex], gameObjects, jumpKeyHeld,
                             wantsToMoveLeft, wantsToMoveRight, dt);
                 }
-                // --- Box2D Physics Step ---
-                b2World_Step(worldId, dt, subSteps);
+
+                // Add these vectors to store original body types
+                static bool wasInTimeFreeze = false;
+                static std::vector<std::tuple<b2BodyId, b2BodyType, b2Vec2, float>> frozenBodyData;
+
+                if(!timeFreeze){
+                    // Just exited freeze mode - restore original body types AND velocities
+                    if (wasInTimeFreeze) {
+                        for (const auto& data : frozenBodyData) {
+                            b2BodyId bodyId = std::get<0>(data);
+                            b2BodyType originalType = std::get<1>(data);
+                            b2Vec2 originalLinearVel = std::get<2>(data);
+                            float originalAngularVel = std::get<3>(data);
+                            
+                            if (!B2_IS_NULL(bodyId)) {
+                                // Restore body type
+                                b2Body_SetType(bodyId, originalType);
+                                // Restore velocities
+                                b2Body_SetLinearVelocity(bodyId, originalLinearVel);
+                                b2Body_SetAngularVelocity(bodyId, originalAngularVel);
+                            }
+                        }
+                        frozenBodyData.clear();
+                        wasInTimeFreeze = false;
+                    }
+                    
+                    // Normal physics for everything
+                    b2World_Step(worldId, dt, subSteps);
+                } else {
+                    // Just entered freeze mode - store original types AND velocities
+                    if (!wasInTimeFreeze) {
+                        frozenBodyData.clear();
+                        for (auto& obj : gameObjects) {
+                            if (!B2_IS_NULL(obj.bodyId) && !B2_ID_EQUALS(obj.bodyId, playerBodyId)) {
+                                // Store original body type and velocities
+                                b2BodyType originalType = b2Body_GetType(obj.bodyId);
+                                b2Vec2 originalLinearVel = b2Body_GetLinearVelocity(obj.bodyId);
+                                float originalAngularVel = b2Body_GetAngularVelocity(obj.bodyId);
+                                
+                                frozenBodyData.push_back(std::make_tuple(obj.bodyId, originalType, originalLinearVel, originalAngularVel));
+                                
+                                // Make completely immovable
+                                b2Body_SetType(obj.bodyId, b2_staticBody);
+                                b2Body_SetLinearVelocity(obj.bodyId, {0.0f, 0.0f});
+                                b2Body_SetAngularVelocity(obj.bodyId, 0.0f);
+                            }
+                        }
+                        wasInTimeFreeze = true;
+                    }
+                    
+                    // During freeze - physics step with static bodies
+                    b2World_Step(worldId, dt, subSteps);
+                }
+
+                // When exiting freeze mode, restore original body types
+                static bool wasInFreeze = false;
+                if (wasInFreeze && !timeFreeze) {
+                    // Restore original body types
+                    for (const auto& data : frozenBodyData) {
+                        b2BodyId bodyId = std::get<0>(data);
+                        b2BodyType originalType = std::get<1>(data);
+                        b2Vec2 originalLinearVel = std::get<2>(data);
+                        float originalAngularVel = std::get<3>(data);
+                        
+                        if (!B2_IS_NULL(bodyId)) {
+                            // Restore body type
+                            b2Body_SetType(bodyId, originalType);
+                            // Restore velocities
+                            b2Body_SetLinearVelocity(bodyId, originalLinearVel);
+                            b2Body_SetAngularVelocity(bodyId, originalAngularVel);
+                        }
+                    }
+                    frozenBodyData.clear();
+                }
+                wasInFreeze = timeFreeze;
                 
                 // --- Sensor Event Handling for Flag and Tremplin ---
                 if (!levelCompleted) {
