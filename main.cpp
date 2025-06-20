@@ -98,7 +98,18 @@ int main() {
         std::cerr << "Failed to load time unfreeze sound!" << std::endl;
         return -1;
     }
-      
+
+    // --- Load Background Map
+    sf::Texture backgroundTexture;
+    if (!backgroundTexture.loadFromFile("../assets/objects/background.png")) {
+        return -1; // Échec de chargement
+    }
+    backgroundTexture.setRepeated(true);
+    sf::RectangleShape backgroundShape(sf::Vector2f(12900.f, 5400.f));
+    backgroundShape.setTexture(&backgroundTexture);
+    backgroundShape.setTextureRect(sf::IntRect(sf::Vector2i(0,0), sf::Vector2i(12900, 5400)));
+    backgroundShape.setPosition(sf::Vector2f(-1000.f, -500.f));
+    
     // Create sound objects
     timeFreezeSound = std::make_unique<sf::Sound>(timeFreezeSoundBuffer);
     timeUnfreezeSound = std::make_unique<sf::Sound>(timeUnfreezeSoundBuffer);
@@ -426,6 +437,7 @@ int main() {
 
                 // --- Rendering ---
                 window.clear(sf::Color(135, 206, 235));
+                window.draw(backgroundShape);
 
                 // Draw all game objects
                 for (size_t i = 0; i < gameObjects.size(); ++i) {

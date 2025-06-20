@@ -46,10 +46,9 @@ inline void createTremplin(
     tremplinObj.setPosition(x_m, y_m);
     tremplinObj.setSize(tremplinWidthM, tremplinHeightM);
     tremplinObj.setDynamic(is_dynamic);
-    tremplinObj.setColor(sf::Color::Black); // Fallback color if sprite fails
+    tremplinObj.setColor(sf::Color::Transparent); // Fallback color if sprite fails
     
     tremplinObj.setCanJumpOnProperty(true);
-    tremplinObj.setSpriteTexturePath("../assets/sprite/objects/tremplin-1.png"); // Path to tremplin image
     tremplinObj.setCollidesWithPlayerProperty(true);
     //tremplinObj.setIsTremplinProperty(true);
     //tremplinObj.setIsSensorProperty(true); // Make the tremplin a sensor
@@ -63,23 +62,23 @@ inline void createTremplin(
 
 
 
-    tremplinSensor.setPosition(x_m , y_m+tremplinHeightM/2+pixelsToMeters(2));
-    tremplinSensor.setSize(tremplinWidthM*2/3, pixelsToMeters(2));
+    tremplinSensor.setPosition(x_m , y_m);
+    tremplinSensor.setSize(tremplinWidthM, tremplinHeightM + pixelsToMeters(1));
     tremplinSensor.setDynamic(is_dynamic);
 
-    tremplinSensor.setColor(sf::Color::Transparent);
+    tremplinSensor.setSpriteTexturePath("../assets/sprite/objects/tremplin-1.png"); // Path to tremplin image
     tremplinSensor.setIsTremplinProperty(true);
     tremplinSensor.setIsSensorProperty(true);
     tremplinSensor.setEnableSensorEventsProperty(true);
 
     if (tremplinObj.finalize(worldId)) {
         gameObjects.push_back(tremplinObj);
-        GameObject& actualtremplinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
-        actualtremplinInVector.ensureCorrectSpriteTextureLink(); 
     }
 
     if (tremplinSensor.finalize(worldId)) {
         gameObjects.push_back(tremplinSensor);
+        GameObject& actualtremplinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
+        actualtremplinInVector.ensureCorrectSpriteTextureLink(); 
     }
 
 }  

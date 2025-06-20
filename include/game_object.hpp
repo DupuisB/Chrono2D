@@ -119,6 +119,7 @@ public:
     void loadPlayerAnimation(const std::string& name, const std::vector<std::string>& framePaths, float frameDuration);
     void setPlayerAnimation(const std::string& name, bool flipped); // 'flipped' is true if facing left
     void updatePlayerAnimation(float dt);
+    void updateTremplinAnimation(float dt);
 
     /**
      * @brief Updates the SFML shape's position and rotation from the Box2D body.

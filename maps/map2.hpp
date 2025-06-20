@@ -109,7 +109,7 @@ inline int loadMap2(b2WorldId worldId,
         boxObj.setPosition(pixelsToMeters(400), pixelsToMeters(160));
         boxObj.setSize(boxSizeM, boxSizeM);
         boxObj.setDynamic(true);
-        boxObj.setColor(sf::Color::Red);
+        boxObj.setSpriteTexturePath("../assets/objects/box.png");
         // boxObj.setFixedRotation(false); // Default
         boxObj.setLinearDamping(0.2f);
         boxObj.setDensity(1.0f); 
@@ -121,6 +121,8 @@ inline int loadMap2(b2WorldId worldId,
 
         if (boxObj.finalize(worldId)) {
             gameObjects.push_back(boxObj);
+            GameObject& actualboxinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
+            actualboxinInVector.ensureCorrectSpriteTextureLink();
         } else {
             std::cerr << "Failed to create pushable box object in map2." << std::endl;
         }

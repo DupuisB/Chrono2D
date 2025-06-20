@@ -123,7 +123,7 @@ void GameObject::setCollidesWithPlayerProperty(bool collidesProp) {
                 maskBits_ = CATEGORY_PLAYER;
             }
         } else {
-            maskBits_ = CATEGORY_WORLD; // Only collides with world
+            maskBits_ = CATEGORY_WORLD | CATEGORY_TREMPLIN; // Only collides with world
         }
         if (!B2_IS_NULL(shapeId)) { // If shape exists, update filter
             b2Filter filter;
@@ -350,6 +350,37 @@ void GameObject::updatePlayerAnimation(float dt) {
         sprite->setOrigin({static_cast<float>(animFrames[currentFrame].getSize().x) / 2.f, static_cast<float>(animFrames[currentFrame].getSize().y) / 2.f});
     }
 }
+
+
+/**
+ * @brief Updates the current player animation frame based on delta time.
+ * @param dt Delta time since the last frame.
+ */
+void GameObject::updateTremplinAnimation(float dt) {
+    if (!sprite || currentAnimationName.empty() || animations.find(currentAnimationName) == animations.end()) {
+        return;
+    }
+
+    const auto& animFrames = animations[currentAnimationName];
+    if (animFrames.size() <= 1) { // Single frame animation or no frames
+        if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) {
+             sprite->setTexture(animFrames[0]); // Ensure correct texture is set
+             sprite->setOrigin({static_cast<float>(animFrames[0].getSize().x) / 2.f, static_cast<float>(animFrames[0].getSize().y) / 2.f});
+        }
+        return;
+    }
+
+    animationTimer += dt;
+    float frameDuration = animationFrameDurations[currentAnimationName];
+
+    if (animationTimer >= frameDuration) {
+        animationTimer -= frameDuration;
+        currentFrame = (currentFrame + 1) % animFrames.size();
+        sprite->setTexture(animFrames[currentFrame]);
+        sprite->setOrigin({static_cast<float>(animFrames[currentFrame].getSize().x) / 2.f, static_cast<float>(animFrames[currentFrame].getSize().y) / 2.f});
+    }
+}
+
 
 
 /**
