@@ -8,6 +8,8 @@
 // --- Map Loading ---
 #include "maps/map0.hpp" // Change this to load different maps
 #include "maps/map2.hpp"
+#include "maps/map3.hpp"
+
 
 #include <vector>
 #include <cmath> 
@@ -135,7 +137,7 @@ int main() {
     
     // --- Main Game Loop ---
 
-    for( int level=1; level <= 2; ++level ) {
+    for( int level=1; level <= 3; ++level ) {
             // Start fade in transition for new level
         if (level > 1) {
             // Clean up previous level
@@ -155,8 +157,11 @@ int main() {
         if (level == 1) {
             playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
         } else if (level == 2) {
+            playerIndex = loadMap3(worldId, gameObjects, playerBodyId);
+        } else if (level == 3) {
             playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
         }
+        
         
         if (level > 1) {
             isTransitioning = true;
@@ -226,8 +231,8 @@ int main() {
                 if (isTimeFreezeTransitioning) {
                     if (isTimeFreezeOverlayFadingIn) {
                         timeFreezeOverlayAlpha += TIMEFREEZE_FADE_SPEED * elapsed_time;
-                        if (timeFreezeOverlayAlpha >= 50.0f ) { // Max alpha for time freeze (semi-transparent)
-                            timeFreezeOverlayAlpha = 50.0f;
+                        if (timeFreezeOverlayAlpha >= 80.0f ) { // Max alpha for time freeze (semi-transparent)
+                            timeFreezeOverlayAlpha = 80.0f;
                             isTimeFreezeOverlayFadingIn = false;
                             isTimeFreezeTransitioning = false;
                         }
