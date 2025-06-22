@@ -80,6 +80,7 @@ public:
      * @brief Default constructor.
      */
     GameObject();
+    GameObject(const GameObject& other);
 
     // --- Setters for properties ---
     void setPosition(float x, float y);

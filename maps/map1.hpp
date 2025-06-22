@@ -35,7 +35,7 @@ inline int loadMap1(b2WorldId worldId,
         playerObj.setPosition(pixelsToMeters(100), pixelsToMeters(300));
         playerObj.setSize(playerWidthM, playerHeightM);
         playerObj.setDynamic(true);
-        playerObj.setColor(sf::Color::Blue); // Color is for sfShape, sprite will be used
+        playerObj.setColor(sf::Color::Blue);
         playerObj.setFixedRotation(true);
         // playerObj.setLinearDamping(0.0f); // Default
         playerObj.setDensity(1.0f);
@@ -48,7 +48,6 @@ inline int loadMap1(b2WorldId worldId,
         if (playerObj.finalize(worldId)) {
             playerBodyId = playerObj.bodyId;
             gameObjects.push_back(playerObj);
-            gameObjects.back().ensureCorrectSpriteTextureLink(); // Add for player object
             playerIndex = static_cast<int>(gameObjects.size() - 1);
         } else {
             std::cerr << "Failed to create player object in map1." << std::endl;
@@ -64,7 +63,7 @@ inline int loadMap1(b2WorldId worldId,
         leftGroundObj.setPosition(-pixelsToMeters(200), - groundHeightM / 2.0f);
         leftGroundObj.setSize(groundWidthM, groundHeightM);
         leftGroundObj.setDynamic(false);
-        leftGroundObj.setColor(sf::Color::Green);
+        leftGroundObj.setColor(sf::Color(34, 139, 34));
         leftGroundObj.setFriction(0.7f);
         leftGroundObj.setRestitution(0.1f);
         leftGroundObj.setIsPlayerProperty(false);
@@ -83,10 +82,11 @@ inline int loadMap1(b2WorldId worldId,
         GameObject rightGroundObj;
         float groundWidthM = pixelsToMeters(800);
         float groundHeightM = pixelsToMeters(300);
-        rightGroundObj.setPosition(pixelsToMeters(1200), - groundHeightM / 2.0f);
+        rightGroundObj.setPosition(pixelsToMeters(1800), - groundHeightM / 2.0f);
         rightGroundObj.setSize(groundWidthM, groundHeightM);
         rightGroundObj.setDynamic(false);
-        rightGroundObj.setColor(sf::Color::Green);
+        // Dark green
+        rightGroundObj.setColor(sf::Color(34, 139, 34));
         rightGroundObj.setFriction(0.7f);
         rightGroundObj.setRestitution(0.1f);
         rightGroundObj.setIsPlayerProperty(false);
@@ -120,34 +120,60 @@ inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, 
     auto currentTime = std::chrono::steady_clock::now();
     auto timeSinceLastSpawn = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastSpawnTime);
     
-    // Spawn a box every 1000ms (1 second)
+    // Spawn boxes every 1000ms (1 second)
     if (!timeFreeze && timeSinceLastSpawn.count() >= 1000) {
-        GameObject boxObj;
         float boxSizeM = pixelsToMeters(80);
         
-        // Spawn boxes above the platform, slightly randomized position
-        float spawnX = pixelsToMeters(450 + (rand() % 100)); // Random X between 450-550 pixels
-        float spawnY = pixelsToMeters(800); // High above the platform
-        
-        boxObj.setPosition(spawnX, spawnY);
-        boxObj.setSize(boxSizeM, boxSizeM);
-        boxObj.setDynamic(true);
-        boxObj.setColor(sf::Color::Red);
-        boxObj.setSpriteTexturePath("../assets/objects/box.png"); // Add box texture
-        boxObj.setLinearDamping(0.1f);  
-        boxObj.setDensity(0.5f);
-        boxObj.setFriction(0.7f);   
-        boxObj.setRestitution(0.3f);    
-        boxObj.setIsPlayerProperty(false);
-        boxObj.setCanJumpOnProperty(true);
-        boxObj.setCollidesWithPlayerProperty(true);
+        // Spawn first box
+        {
+            GameObject boxObj;
+            float spawnX = pixelsToMeters(450 + (rand() % 100)); // Random X between 450-550 pixels
+            float spawnY = pixelsToMeters(800); // High above the platform
+            
+            boxObj.setPosition(spawnX, spawnY);
+            boxObj.setSize(boxSizeM, boxSizeM);
+            boxObj.setDynamic(true);
+            boxObj.setColor(sf::Color::Red);
+            boxObj.setSpriteTexturePath("../assets/objects/box.png");
+            boxObj.setLinearDamping(0.1f);  
+            boxObj.setDensity(0.5f);
+            boxObj.setFriction(0.7f);   
+            boxObj.setRestitution(0.3f);    
+            boxObj.setIsPlayerProperty(false);
+            boxObj.setCanJumpOnProperty(true);
+            boxObj.setCollidesWithPlayerProperty(true);
 
-        if (boxObj.finalize(worldId)) {
-            gameObjects.push_back(boxObj);
-            GameObject& actualBoxInVector = gameObjects.back(); // Get a reference to the box in the vector
-            actualBoxInVector.ensureCorrectSpriteTextureLink(); // Ensure proper texture linking
-        } else {
-            std::cerr << "Failed to create falling box in map1." << std::endl;
+            if (boxObj.finalize(worldId)) {
+                gameObjects.push_back(boxObj);
+            } else {
+                std::cerr << "Failed to create first falling box in map1." << std::endl;
+            }
+        }
+        
+        // Spawn second box 1000 pixels later
+        {
+            GameObject boxObj2;
+            float spawnX2 = pixelsToMeters(450 + (rand() % 100) + 500); // Random X between 1450-1550 pixels
+            float spawnY2 = pixelsToMeters(800); // High above the platform
+            
+            boxObj2.setPosition(spawnX2, spawnY2);
+            boxObj2.setSize(boxSizeM, boxSizeM);
+            boxObj2.setDynamic(true);
+            boxObj2.setColor(sf::Color::Red);
+            boxObj2.setSpriteTexturePath("../assets/objects/box.png");
+            boxObj2.setLinearDamping(0.1f);  
+            boxObj2.setDensity(0.5f);
+            boxObj2.setFriction(0.7f);   
+            boxObj2.setRestitution(0.3f);    
+            boxObj2.setIsPlayerProperty(false);
+            boxObj2.setCanJumpOnProperty(true);
+            boxObj2.setCollidesWithPlayerProperty(true);
+
+            if (boxObj2.finalize(worldId)) {
+                gameObjects.push_back(boxObj2);
+            } else {
+                std::cerr << "Failed to create second falling box in map1." << std::endl;
+            }
         }
         
         lastSpawnTime = currentTime;

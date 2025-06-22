@@ -14,6 +14,29 @@ GameObject::GameObject() : bodyId(b2_nullBodyId), shapeId(b2_nullShapeId), hasVi
     // Example: x_m_ = 0.0f; y_m_ = 0.0f; width_m_ = 1.0f; etc.
 }
 
+GameObject::GameObject(const GameObject& other)
+    : x_m_(other.x_m_), y_m_(other.y_m_), width_m_(other.width_m_), height_m_(other.height_m_),
+      isDynamic_val_(other.isDynamic_val_), fixedRotation_val_(other.fixedRotation_val_),
+      linearDamping_val_(other.linearDamping_val_), density_val_(other.density_val_),
+      friction_val_(other.friction_val_), restitution_val_(other.restitution_val_),
+      isPlayer_prop_(other.isPlayer_prop_), canJumpOn_prop_(other.canJumpOn_prop_),
+      collidesWithPlayer_prop_(other.collidesWithPlayer_prop_), isFlag_prop_(other.isFlag_prop_),
+      isTremplin_prop_(other.isTremplin_prop_), isSensor_prop_(other.isSensor_prop_),
+      enableSensorEvents_prop_(other.enableSensorEvents_prop_), categoryBits_(other.categoryBits_),
+      maskBits_(other.maskBits_), pendingImpulsion(other.pendingImpulsion),
+      bodyId(other.bodyId), shapeId(other.shapeId), sfShape(other.sfShape),
+      color_val_(other.color_val_), hasVisual(other.hasVisual), canJumpOn(other.canJumpOn),
+      isFlag_(other.isFlag_), isTremplin(other.isTremplin), sprite(other.sprite),
+      isPlayer(other.isPlayer), animations(other.animations),
+      animationFrameDurations(other.animationFrameDurations), genericTexture_(other.genericTexture_),
+      spriteTexturePath_prop_(other.spriteTexturePath_prop_), playerShapeInfo(other.playerShapeInfo),
+      currentAnimationName(other.currentAnimationName), currentFrame(other.currentFrame),
+      animationTimer(other.animationTimer), spriteFlipped(other.spriteFlipped) {
+    
+    // After copying, re-link the sprite's texture pointer to the new object's texture.
+    ensureCorrectSpriteTextureLink();
+}
+
 // --- Property Setters ---
 void GameObject::setPosition(float x, float y) {
     x_m_ = x;
@@ -205,9 +228,9 @@ bool GameObject::finalize(b2WorldId worldId) {
     }
 
     // Setup SFML Shape
-    sfShape.setSize({metersToPixels(width_m_), metersToPixels(height_m_)});
+    sfShape.setSize(sf::Vector2f(metersToPixels(width_m_), metersToPixels(height_m_)));
     sfShape.setFillColor(color_val_);
-    sfShape.setOrigin({metersToPixels(width_m_) / 2.0f, metersToPixels(height_m_) / 2.0f});
+    sfShape.setOrigin(sf::Vector2f(metersToPixels(width_m_) / 2.0f, metersToPixels(height_m_) / 2.0f));
     sfShape.setPosition(b2VecToSfVec({x_m_, y_m_})); // Initial position
     hasVisual = true;
 
@@ -260,7 +283,8 @@ bool GameObject::finalize(b2WorldId worldId) {
         bool loadSuccess = genericTexture_.loadFromFile(spriteTexturePath_prop_);
         if (loadSuccess) {
             sprite.emplace(genericTexture_); // Construct the sprite with the loaded texture
-            sprite->setOrigin({static_cast<float>(genericTexture_.getSize().x) / 2.f, static_cast<float>(genericTexture_.getSize().y) / 2.f});
+            sf::Vector2u textureSize = genericTexture_.getSize();
+            sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
         } else {
             std::cerr << "Failed to load generic texture from path: " << spriteTexturePath_prop_ << std::endl;
         }
@@ -313,7 +337,8 @@ void GameObject::setPlayerAnimation(const std::string& name, bool flipped) {
             } else {
                 sprite->setTexture(tex);
             }
-            sprite->setOrigin({static_cast<float>(tex.getSize().x) / 2.f, static_cast<float>(tex.getSize().y) / 2.f});
+            sf::Vector2u textureSize = tex.getSize();
+            sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
         } else if (sprite) { 
             // No frames for this animation, but sprite exists.
             sprite.reset(); 
@@ -335,7 +360,8 @@ void GameObject::updatePlayerAnimation(float dt) {
     if (animFrames.size() <= 1) { // Single frame animation or no frames
         if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) {
              sprite->setTexture(animFrames[0]); // Ensure correct texture is set
-             sprite->setOrigin({static_cast<float>(animFrames[0].getSize().x) / 2.f, static_cast<float>(animFrames[0].getSize().y) / 2.f});
+             sf::Vector2u textureSize = animFrames[0].getSize();
+             sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
         }
         return;
     }
@@ -347,7 +373,8 @@ void GameObject::updatePlayerAnimation(float dt) {
         animationTimer -= frameDuration;
         currentFrame = (currentFrame + 1) % animFrames.size();
         sprite->setTexture(animFrames[currentFrame]);
-        sprite->setOrigin({static_cast<float>(animFrames[currentFrame].getSize().x) / 2.f, static_cast<float>(animFrames[currentFrame].getSize().y) / 2.f});
+        sf::Vector2u textureSize = animFrames[currentFrame].getSize();
+        sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
     }
 }
 
@@ -365,7 +392,8 @@ void GameObject::updateTremplinAnimation(float dt) {
     if (animFrames.size() <= 1) { // Single frame animation or no frames
         if (!animFrames.empty() && (&sprite->getTexture() != &animFrames[0])) {
              sprite->setTexture(animFrames[0]); // Ensure correct texture is set
-             sprite->setOrigin({static_cast<float>(animFrames[0].getSize().x) / 2.f, static_cast<float>(animFrames[0].getSize().y) / 2.f});
+             sf::Vector2u textureSize = animFrames[0].getSize();
+             sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
         }
         return;
     }
@@ -377,7 +405,8 @@ void GameObject::updateTremplinAnimation(float dt) {
         animationTimer -= frameDuration;
         currentFrame = (currentFrame + 1) % animFrames.size();
         sprite->setTexture(animFrames[currentFrame]);
-        sprite->setOrigin({static_cast<float>(animFrames[currentFrame].getSize().x) / 2.f, static_cast<float>(animFrames[currentFrame].getSize().y) / 2.f});
+        sf::Vector2u textureSize = animFrames[currentFrame].getSize();
+        sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
     }
 }
 
@@ -398,8 +427,6 @@ void GameObject::updateShape() {
     b2Transform transform = b2Body_GetTransform(bodyId);
     sf::Vector2f sfmlPos = b2VecToSfVec(transform.p);
 
-
-
     // Update sfShape (can be used for non-player objects or as debug visual)
     if (hasVisual) {
         sfShape.setPosition(sfmlPos);
@@ -411,13 +438,22 @@ void GameObject::updateShape() {
     // Update player sprite
     if (isPlayer && sprite.has_value() && sprite->getTexture().getSize() != sf::Vector2u(0,0)) {
         sprite->setPosition(sfmlPos);
-        sprite->setScale({spriteFlipped ? -1.f : 1.f, 1.f});
+        // Calculate proper scale based on GameObject size vs texture size
+        sf::Vector2u textureSize = sprite->getTexture().getSize();
+        float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
+        float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
+        sprite->setScale(sf::Vector2f(spriteFlipped ? -scaleX : scaleX, scaleY));
         sprite->setRotation(sf::degrees(0.f)); 
     } 
-    // Update generic sprite for non-player objects (e.g., flag)
+    // Update generic sprite for non-player objects (e.g., flag, box)
     else if (!isPlayer && sprite.has_value() && sprite->getTexture().getSize() != sf::Vector2u(0,0)) {
         sprite->setPosition(sfmlPos);
-        sprite->setRotation(sf::degrees(0.f)); // Assuming flag doesn't rotate
+        // Calculate proper scale based on GameObject size vs texture size
+        sf::Vector2u textureSize = sprite->getTexture().getSize();
+        float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
+        float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
+        sprite->setScale(sf::Vector2f(scaleX, scaleY));
+        sprite->setRotation(sf::degrees(0.f)); // Assuming non-player objects don't rotate
     }
 }
 
@@ -431,8 +467,7 @@ void GameObject::draw(sf::RenderWindow& window) const {
         window.draw(*sprite);
     } else if (!isPlayer && sprite.has_value() && sprite->getTexture().getSize() != sf::Vector2u(0,0)) { // Draw generic sprite
         window.draw(*sprite);
-    } else if (hasVisual && !B2_IS_NULL(bodyId)) { // Fallback or for non-player objects without a sprite
-
+    } else if (hasVisual && !B2_IS_NULL(bodyId)) {
         window.draw(sfShape);
     }
 }
@@ -450,18 +485,14 @@ void GameObject::ensureCorrectSpriteTextureLink() {
     if (sprite.has_value()) {
         if (!isPlayer && !spriteTexturePath_prop_.empty()) {
             // For generic sprites, re-link to genericTexture_
-            // First, ensure genericTexture_ itself is valid (it should be if it was properly copied)
             if (genericTexture_.getSize().x > 0 && genericTexture_.getSize().y > 0) {
                 sprite->setTexture(genericTexture_, true); // true to reset texture rect
                 
-                // Scale sprite to match GameObject size
+                // Set proper origin
                 sf::Vector2u textureSize = genericTexture_.getSize();
-                float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
-                float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
-                sprite->setScale(sf::Vector2f(spriteFlipped ? -scaleX : scaleX, scaleY));
+                sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
                 
-                // Update origin based on new scale
-                sprite->setOrigin({static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f});
+                // Scale will be handled in updateShape()
             } else {
                 sprite.reset(); // Cannot use the sprite if its intended texture is bad.
             }
@@ -469,18 +500,14 @@ void GameObject::ensureCorrectSpriteTextureLink() {
             // For player sprites, re-link to the texture in the animations map
             const auto& animFrames = animations[currentAnimationName];
             if (currentFrame >= 0 && static_cast<size_t>(currentFrame) < animFrames.size()) {
-                 // Ensure the texture in animFrames is valid before setting
                 if (animFrames[currentFrame].getSize().x > 0 && animFrames[currentFrame].getSize().y > 0) {
                     sprite->setTexture(animFrames[currentFrame], true);
                     
-                    // Scale player sprite to match GameObject size
+                    // Set proper origin
                     sf::Vector2u textureSize = animFrames[currentFrame].getSize();
-                    float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
-                    float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
-                    sprite->setScale(sf::Vector2f(spriteFlipped ? -scaleX : scaleX, scaleY));
-                    
-                    // Update origin based on new scale
                     sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
+                    
+                    // Scale will be handled in updateShape()
                 } else {
                     std::cerr << "Invalid texture for current frame in animation: " << currentAnimationName << std::endl;
                     sprite.reset();

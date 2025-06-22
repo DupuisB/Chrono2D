@@ -77,8 +77,6 @@ inline void createTremplin(
 
     if (tremplinSensor.finalize(worldId)) {
         gameObjects.push_back(tremplinSensor);
-        GameObject& actualtremplinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
-        actualtremplinInVector.ensureCorrectSpriteTextureLink(); 
     }
 
 }  

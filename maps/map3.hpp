@@ -34,7 +34,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(-groundWidthM / 2.0f, groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -55,7 +55,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(-pixelsToMeters(1000)/ 2.0f - pixelsToMeters(100), groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -76,7 +76,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(groundWidthM / 2.0f+ pixelsToMeters(1600), groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -101,7 +101,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(pixelsToMeters(330), groundHeightM);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -125,7 +125,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(0, pixelsToMeters(70)-groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -147,7 +147,7 @@ inline int loadMap3(b2WorldId worldId,
         groundObj.setPosition(groundWidthM / 2.0f + pixelsToMeters(1000), groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
@@ -184,7 +184,6 @@ inline int loadMap3(b2WorldId worldId,
         if (playerObj.finalize(worldId)) {
             playerBodyId = playerObj.bodyId;
             gameObjects.push_back(playerObj);
-            gameObjects.back().ensureCorrectSpriteTextureLink(); // Add for player object
             playerIndex = static_cast<int>(gameObjects.size() - 1);
         } else {
             std::cerr << "Failed to create player object in map1." << std::endl;

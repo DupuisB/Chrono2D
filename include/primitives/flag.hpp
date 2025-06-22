@@ -46,7 +46,6 @@ inline b2BodyId createFlag(
     if (flagObj.finalize(worldId)) {
         gameObjects.push_back(flagObj);
         GameObject& actualFlagInVector = gameObjects.back(); // Get a reference to the flag in the vector
-        actualFlagInVector.ensureCorrectSpriteTextureLink(); 
 
         return actualFlagInVector.bodyId; // Return the bodyId of the object in the vector
     }

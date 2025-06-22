@@ -35,7 +35,7 @@ inline int loadMap2(b2WorldId worldId,
         groundObj.setPosition(groundWidthM / 2.0f, groundHeightM / 2.0f);
         groundObj.setSize(groundWidthM, groundHeightM);
         groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
+        groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
         groundObj.setRestitution(0.1f);
         groundObj.setIsPlayerProperty(false);
@@ -56,7 +56,7 @@ inline int loadMap2(b2WorldId worldId,
         wallObj.setPosition(wallWidthM / 2.0f + pixelsToMeters(1000), wallHeightM / 2.0f + pixelsToMeters(50));
         wallObj.setSize(wallWidthM, wallHeightM);
         wallObj.setDynamic(false); // Sets density to 0
-        wallObj.setColor(sf::Color::Green);
+        wallObj.setColor(sf::Color(34, 139, 34));
         wallObj.setFriction(0.7f);
         wallObj.setRestitution(0.1f);
         wallObj.setIsPlayerProperty(false);
@@ -93,7 +93,6 @@ inline int loadMap2(b2WorldId worldId,
         if (playerObj.finalize(worldId)) {
             playerBodyId = playerObj.bodyId;
             gameObjects.push_back(playerObj);
-            gameObjects.back().ensureCorrectSpriteTextureLink(); // Add for player object
             playerIndex = static_cast<int>(gameObjects.size() - 1);
         } else {
             std::cerr << "Failed to create player object in map2." << std::endl;
@@ -121,8 +120,6 @@ inline int loadMap2(b2WorldId worldId,
 
         if (boxObj.finalize(worldId)) {
             gameObjects.push_back(boxObj);
-            GameObject& actualboxinInVector = gameObjects.back(); // Get a reference to the tremplin in the vector
-            actualboxinInVector.ensureCorrectSpriteTextureLink();
         } else {
             std::cerr << "Failed to create pushable box object in map2." << std::endl;
         }
