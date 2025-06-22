@@ -65,7 +65,7 @@ inline int loadMap1(b2WorldId worldId,
         leftGroundObj.setDynamic(false);
         leftGroundObj.setColor(sf::Color(34, 139, 34));
         leftGroundObj.setFriction(0.7f);
-        leftGroundObj.setRestitution(0.1f);
+        leftGroundObj.setRestitution(0.0f);
         leftGroundObj.setIsPlayerProperty(false);
         leftGroundObj.setCanJumpOnProperty(true);
         leftGroundObj.setCollidesWithPlayerProperty(true);
@@ -88,7 +88,7 @@ inline int loadMap1(b2WorldId worldId,
         // Dark green
         rightGroundObj.setColor(sf::Color(34, 139, 34));
         rightGroundObj.setFriction(0.7f);
-        rightGroundObj.setRestitution(0.1f);
+        rightGroundObj.setRestitution(0.0f);
         rightGroundObj.setIsPlayerProperty(false);
         rightGroundObj.setCanJumpOnProperty(true);
         rightGroundObj.setCollidesWithPlayerProperty(true);
@@ -138,7 +138,7 @@ inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, 
             boxObj.setLinearDamping(0.1f);  
             boxObj.setDensity(0.5f);
             boxObj.setFriction(0.7f);   
-            boxObj.setRestitution(0.3f);    
+            boxObj.setRestitution(0.0f);    
             boxObj.setIsPlayerProperty(false);
             boxObj.setCanJumpOnProperty(true);
             boxObj.setCollidesWithPlayerProperty(true);
@@ -164,7 +164,7 @@ inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, 
             boxObj2.setLinearDamping(0.1f);  
             boxObj2.setDensity(0.5f);
             boxObj2.setFriction(0.7f);   
-            boxObj2.setRestitution(0.3f);    
+            boxObj2.setRestitution(0.0f);    
             boxObj2.setIsPlayerProperty(false);
             boxObj2.setCanJumpOnProperty(true);
             boxObj2.setCollidesWithPlayerProperty(true);

@@ -37,7 +37,7 @@ inline int loadMap2(b2WorldId worldId,
         groundObj.setDynamic(false); // Sets density to 0
         groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
+        groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
         groundObj.setCanJumpOnProperty(true);
         groundObj.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
@@ -58,7 +58,7 @@ inline int loadMap2(b2WorldId worldId,
         wallObj.setDynamic(false); // Sets density to 0
         wallObj.setColor(sf::Color(34, 139, 34));
         wallObj.setFriction(0.7f);
-        wallObj.setRestitution(0.1f);
+        wallObj.setRestitution(0.0f);
         wallObj.setIsPlayerProperty(false);
         wallObj.setCanJumpOnProperty(true);
         wallObj.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
@@ -113,7 +113,7 @@ inline int loadMap2(b2WorldId worldId,
         boxObj.setLinearDamping(0.2f);
         boxObj.setDensity(1.0f); 
         boxObj.setFriction(0.7f);
-        boxObj.setRestitution(0.1f);
+        boxObj.setRestitution(0.0f);
         boxObj.setIsPlayerProperty(false);
         boxObj.setCanJumpOnProperty(true);
         boxObj.setCollidesWithPlayerProperty(true);
@@ -141,7 +141,7 @@ inline int loadMap2(b2WorldId worldId,
         // platformObj.setFixedRotation(false); // Default
         platformObj.setLinearDamping(0.5f);
         platformObj.setFriction(0.7f);
-        platformObj.setRestitution(0.1f);
+        platformObj.setRestitution(0.0f);
         platformObj.setIsPlayerProperty(false);
         platformObj.setCanJumpOnProperty(true);
         platformObj.setCollidesWithPlayerProperty(true);
