@@ -107,10 +107,16 @@ int main() {
         return -1; // Échec de chargement
     }
     backgroundTexture.setRepeated(true);
-    sf::RectangleShape backgroundShape(sf::Vector2f(12900.f, 5400.f));
+    sf::RectangleShape backgroundShape;
     backgroundShape.setTexture(&backgroundTexture);
-    backgroundShape.setTextureRect(sf::IntRect(sf::Vector2i(0,0), sf::Vector2i(12900, 5400)));
-    backgroundShape.setPosition(sf::Vector2f(-1000.f, -500.f));
+
+    sf::Texture cloudTexture;
+    if (!cloudTexture.loadFromFile("../assets/objects/cloud.png")) {
+        return -1; // Échec de chargement
+    }
+    cloudTexture.setRepeated(true);
+    sf::RectangleShape cloudShape;
+    cloudShape.setTexture(&cloudTexture);
     
     // Create sound objects
     timeFreezeSound = std::make_unique<sf::Sound>(timeFreezeSoundBuffer);
@@ -155,7 +161,7 @@ int main() {
         }
 
         if (level == 1) {
-            playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
+            playerIndex = loadMap0(worldId, gameObjects, playerBodyId);
         } else if (level == 2) {
             playerIndex = loadMap3(worldId, gameObjects, playerBodyId);
         } else if (level == 3) {
@@ -188,6 +194,7 @@ int main() {
 
             // --- Game Loop Variables ---
             sf::Clock clock;
+            sf::Clock cloudClock; // Add clock for cloud movement
             int32_t subSteps = 8;   // Number of physics sub-steps per frame
             bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once   
             while (window.isOpen()) {
@@ -438,11 +445,49 @@ int main() {
                     sf::Vector2f center = b2VecToSfVec(playerPos);
                     view.setCenter(center);
                 }
+
+                // Parallax background
+                const float backgroundParallaxFactor = 0.1f;
+                const float cloudParallaxFactor = 0.2f;
+                const float cloudDriftSpeed = 0.005f; // Pixels per millisecond drift speed
+                sf::Vector2f viewTopLeft = view.getCenter() - view.getSize();
+
+                backgroundShape.setPosition(viewTopLeft);
+                backgroundShape.setSize(view.getSize() * 5.0f);
+                sf::Rect<int> bgTextureRect(
+                    sf::Vector2i(
+                        static_cast<int>(view.getCenter().x * backgroundParallaxFactor),
+                        static_cast<int>(view.getCenter().y * backgroundParallaxFactor)
+                    ),
+                    sf::Vector2i(
+                        static_cast<int>(view.getSize().x),
+                        static_cast<int>(view.getSize().y)
+                    )
+                );
+                backgroundShape.setTextureRect(bgTextureRect);
+
+                cloudShape.setPosition(viewTopLeft);
+                cloudShape.setSize(view.getSize() * 5.0f);
+                // Add time-based drift to cloud movement
+                float cloudDriftOffset = cloudClock.getElapsedTime().asMilliseconds() * cloudDriftSpeed;
+                sf::Rect<int> cloudTextureRect(
+                    sf::Vector2i(
+                        static_cast<int>(view.getCenter().x * cloudParallaxFactor + cloudDriftOffset),
+                        static_cast<int>(view.getCenter().y * cloudParallaxFactor)
+                    ),
+                    sf::Vector2i(
+                        static_cast<int>(view.getSize().x),
+                        static_cast<int>(view.getSize().y)
+                    )
+                );
+                cloudShape.setTextureRect(cloudTextureRect);
+
                 window.setView(view); 
 
                 // --- Rendering ---
                 window.clear(sf::Color(135, 206, 235));
                 window.draw(backgroundShape);
+                window.draw(cloudShape);
 
                 // Draw all game objects
                 for (size_t i = 0; i < gameObjects.size(); ++i) {
@@ -483,8 +528,7 @@ int main() {
             // Reset the Box2D world for the next level
             b2DestroyWorld(worldId);
             worldId = b2CreateWorld(&worldDef);
-
-
+            cloudClock.restart(); // Reset cloud clock for next level
 
         }
     // --- Cleanup ---

@@ -19,7 +19,7 @@
  * @param playerBodyId A reference to store the b2BodyId of the created player object.
  * @return The index of the player GameObject in the gameObjects vector, or -1 if not created.
  */
-inline int loadMap1(b2WorldId worldId,
+inline int loadMap0(b2WorldId worldId,
                      std::vector<GameObject>& gameObjects,
                      b2BodyId& playerBodyId) { 
 
