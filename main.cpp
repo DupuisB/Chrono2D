@@ -7,6 +7,7 @@
 
 // --- Map Loading ---
 #include "maps/map0.hpp" // Change this to load different maps
+#include "maps/map1.hpp"
 #include "maps/map2.hpp"
 #include "maps/map3.hpp"
 
@@ -148,7 +149,7 @@ int main() {
         // to consolidate all inter-level cleanup.
 
         if (level == 1) {
-            playerIndex = loadMap0(worldId, gameObjects, playerBodyId);
+            playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
         } else if (level == 2) {
             playerIndex = loadMap3(worldId, gameObjects, playerBodyId);
         } else if (level == 3) {

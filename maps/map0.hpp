@@ -1,5 +1,5 @@
-#ifndef MAP1_HPP
-#define MAP1_HPP
+#ifndef MAP0_HPP
+#define MAP0_HPP
 
 #include <SFML/Graphics.hpp>
 #include <box2d/box2d.h>
@@ -249,3 +249,4 @@ inline int loadMap0(b2WorldId worldId,
 }
 
 #endif // MAP1_HPP
+    
