@@ -9,11 +9,12 @@
 #include <vector>
 #include <iostream> // For std::cout, std::cerr
 #include <cmath>    // For b2Distance, M_PI / b2_pi
+#include <chrono>   // For timing
 
 /**
  * @brief Loads the game objects for Map 1 into the world.
- * This includes the ground, player, a pushable box, a hanging platform with a rope,
- * and a horizontal rope bridge.
+ * This includes the ground with a big hole in the middle, player, 
+ * and a box spawning system that drops boxes every second.
  * @param worldId The ID of the Box2D world.
  * @param gameObjects A reference to the vector that will store all created GameObjects.
  * @param playerBodyId A reference to store the b2BodyId of the created player object.
@@ -55,116 +56,99 @@ inline int loadMap1(b2WorldId worldId,
         }
     }
 
-    // Ground
+    // Left Ground (before the hole)
     {
-        GameObject groundObj;
-        float groundWidthM = pixelsToMeters(1000);
+        GameObject leftGroundObj;
+        float groundWidthM = pixelsToMeters(800);
         float groundHeightM = pixelsToMeters(300);
-        groundObj.setPosition(0, - groundHeightM / 2.0f);
-        groundObj.setSize(groundWidthM, groundHeightM);
-        groundObj.setDynamic(false); // Sets density to 0
-        groundObj.setColor(sf::Color::Green);
-        groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
-        groundObj.setIsPlayerProperty(false);
-        groundObj.setCanJumpOnProperty(true);
-        groundObj.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
+        leftGroundObj.setPosition(-pixelsToMeters(200), - groundHeightM / 2.0f);
+        leftGroundObj.setSize(groundWidthM, groundHeightM);
+        leftGroundObj.setDynamic(false);
+        leftGroundObj.setColor(sf::Color::Green);
+        leftGroundObj.setFriction(0.7f);
+        leftGroundObj.setRestitution(0.1f);
+        leftGroundObj.setIsPlayerProperty(false);
+        leftGroundObj.setCanJumpOnProperty(true);
+        leftGroundObj.setCollidesWithPlayerProperty(true);
 
-        if (groundObj.finalize(worldId)) {
-            gameObjects.push_back(groundObj);
+        if (leftGroundObj.finalize(worldId)) {
+            gameObjects.push_back(leftGroundObj);
         } else {
-            std::cerr << "Failed to create ground object in map1." << std::endl;
+            std::cerr << "Failed to create left ground object in map1." << std::endl;
         }
     }
 
-    // Ground
+    // Right Ground (after the hole)
     {
-        GameObject groundObj2;
-        float groundWidthM = pixelsToMeters(1000);
+        GameObject rightGroundObj;
+        float groundWidthM = pixelsToMeters(800);
         float groundHeightM = pixelsToMeters(300);
-        groundObj2.setPosition(pixelsToMeters(2000), - groundHeightM / 2.0f);
-        groundObj2.setSize(groundWidthM, groundHeightM);
-        groundObj2.setDynamic(false); // Sets density to 0
-        groundObj2.setColor(sf::Color::Green);
-        groundObj2.setFriction(0.7f);
-        groundObj2.setRestitution(0.1f);
-        groundObj2.setIsPlayerProperty(false);
-        groundObj2.setCanJumpOnProperty(true);
-        groundObj2.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
+        rightGroundObj.setPosition(pixelsToMeters(1200), - groundHeightM / 2.0f);
+        rightGroundObj.setSize(groundWidthM, groundHeightM);
+        rightGroundObj.setDynamic(false);
+        rightGroundObj.setColor(sf::Color::Green);
+        rightGroundObj.setFriction(0.7f);
+        rightGroundObj.setRestitution(0.1f);
+        rightGroundObj.setIsPlayerProperty(false);
+        rightGroundObj.setCanJumpOnProperty(true);
+        rightGroundObj.setCollidesWithPlayerProperty(true);
 
-        if (groundObj2.finalize(worldId)) {
-            gameObjects.push_back(groundObj2);
+        if (rightGroundObj.finalize(worldId)) {
+            gameObjects.push_back(rightGroundObj);
         } else {
-            std::cerr << "Failed to create ground object in map1." << std::endl;
-        }
-    }
-
-    // Middle ground
-    {
-        GameObject groundObj3;
-        float groundWidthM = pixelsToMeters(1000);
-        float groundHeightM = pixelsToMeters(100);
-        groundObj3.setPosition(pixelsToMeters(1000), -pixelsToMeters(300));
-        groundObj3.setSize(groundWidthM, groundHeightM);
-        groundObj3.setDynamic(false); // Sets density to 0
-        groundObj3.setColor(sf::Color::Green);
-        groundObj3.setFriction(0.7f);
-        groundObj3.setRestitution(0.1f);
-        groundObj3.setIsPlayerProperty(false);
-        groundObj3.setCanJumpOnProperty(true);
-        groundObj3.setCollidesWithPlayerProperty(true); // Default for non-player, but explicit
-
-        if (groundObj3.finalize(worldId)) {
-            gameObjects.push_back(groundObj3);
-        } else {
-            std::cerr << "Failed to create middle ground object in map1." << std::endl;
-        }
-    }
-
-    // Stack of Pushable Boxes
-    {
-        const int numberOfBoxes = 50;
-        float boxSizeM = pixelsToMeters(40);    // Size of each box (width and height)
-        float boxX_m = pixelsToMeters(400);
-
-        float originalGroundReferenceY_m = pixelsToMeters(50);
-        float smallOffset_m = pixelsToMeters(1);
-        
-        float firstBoxBottomY_m = originalGroundReferenceY_m + smallOffset_m;
-
-        for (int i = 0; i < numberOfBoxes; ++i) {
-            GameObject boxObj;
-            
-            float currentBoxBottomY_m = firstBoxBottomY_m + (i * boxSizeM);
-            float boxCenterY_m = currentBoxBottomY_m + (boxSizeM / 2.0f);
-
-            boxObj.setPosition(boxX_m, boxCenterY_m);
-            boxObj.setSize(boxSizeM, boxSizeM);
-            boxObj.setDynamic(true);
-            boxObj.setColor(sf::Color::Red);
-            boxObj.setLinearDamping(0.2f);  
-            boxObj.setDensity(0.2f);
-            boxObj.setFriction(0.7f);   
-            boxObj.setRestitution(0.1f);    
-            boxObj.setIsPlayerProperty(false);
-            boxObj.setCanJumpOnProperty(true);
-            boxObj.setCollidesWithPlayerProperty(true);
-
-            if (boxObj.finalize(worldId)) {
-                gameObjects.push_back(boxObj);
-            } else {
-                std::cerr << "Failed to create pushable box object " << i << " in stack for map1." << std::endl;
-            }
+            std::cerr << "Failed to create right ground object in map1." << std::endl;
         }
     }
 
     // Flag
-    float flagX_m = pixelsToMeters(1600.0f);
+    float flagX_m = pixelsToMeters(1400.0f);
     float flagY_m = pixelsToMeters(0.0f);
     float flagHeight = pixelsToMeters(120.0f);
     createFlag(worldId, gameObjects, flagX_m, flagY_m + flagHeight / 2.0f);
 
     return playerIndex;
+}
+
+/**
+ * @brief Updates the map1 spawning system. Call this every frame.
+ * @param worldId The ID of the Box2D world.
+ * @param gameObjects A reference to the vector that stores all GameObjects.
+ * @param timeFreeze A boolean indicating whether time is currently frozen.
+ */
+inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, bool timeFreeze) {
+    static auto lastSpawnTime = std::chrono::steady_clock::now();
+    auto currentTime = std::chrono::steady_clock::now();
+    auto timeSinceLastSpawn = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastSpawnTime);
+    
+    // Spawn a box every 1000ms (1 second)
+    if (!timeFreeze && timeSinceLastSpawn.count() >= 1000) {
+        GameObject boxObj;
+        float boxSizeM = pixelsToMeters(80);
+        
+        // Spawn boxes above the platform, slightly randomized position
+        float spawnX = pixelsToMeters(450 + (rand() % 100)); // Random X between 450-550 pixels
+        float spawnY = pixelsToMeters(800); // High above the platform
+        
+        boxObj.setPosition(spawnX, spawnY);
+        boxObj.setSize(boxSizeM, boxSizeM);
+        boxObj.setDynamic(true);
+        boxObj.setColor(sf::Color::Red);
+        boxObj.setLinearDamping(0.1f);  
+        boxObj.setDensity(0.5f);
+        boxObj.setFriction(0.7f);   
+        boxObj.setRestitution(0.3f);    
+        boxObj.setIsPlayerProperty(false);
+        boxObj.setCanJumpOnProperty(true);
+        boxObj.setCollidesWithPlayerProperty(true);
+
+        if (boxObj.finalize(worldId)) {
+            gameObjects.push_back(boxObj);
+        } else {
+            std::cerr << "Failed to create falling box in map1." << std::endl;
+        }
+        
+        lastSpawnTime = currentTime;
+    }
 }
 
 #endif // MAP1_HPP

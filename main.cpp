@@ -448,6 +448,10 @@ int main() {
                     obj.updateShape();
                 }
 
+                if (level == 1) {
+                    updateMap1(worldId, gameObjects, timeFreeze);
+                }
+
                 // --- Camera Follow Player ---
                 if (!B2_IS_NULL(playerBodyId)) {
                     b2Vec2 playerPos = b2Body_GetPosition(playerBodyId);
