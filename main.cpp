@@ -182,6 +182,8 @@ int main() {
             // --- Game Loop Variables ---
             sf::Clock clock;
             sf::Clock cloudClock; // Add clock for cloud movement
+            sf::Time cloudPausedTime = sf::Time::Zero;
+            bool cloudClockPaused = false; 
             int32_t subSteps = 8;   // Number of physics sub-steps per frame
             bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once   
             bool levelReset = false; // Flag to reset the current level
@@ -279,6 +281,8 @@ int main() {
                         if (timeFreezeSound && timeFreezeSound->getStatus() != sf::SoundSource::Status::Playing) {
                             timeFreezeSound->play();
                         }
+                        cloudPausedTime += cloudClock.getElapsedTime();
+                        cloudClockPaused = true;
                         std::cout << "Time frozen - fading in overlay." << std::endl;
                     } else if (!isTimeFreezeTransitioning) {
                         // Ending time freeze - begin fade out
@@ -288,6 +292,8 @@ int main() {
                         if (timeUnfreezeSound && timeUnfreezeSound->getStatus() != sf::SoundSource::Status::Playing) {
                             timeUnfreezeSound->play();
                         }
+                        cloudClock.restart();
+                        cloudClockPaused = false;
                         std::cout << "Time unfrozen - fading out overlay." << std::endl;
                     }
                 }
@@ -471,7 +477,12 @@ int main() {
                 cloudShape.setPosition(viewTopLeft);
                 cloudShape.setSize(view.getSize() * 5.0f);
                 // Add time-based drift to cloud movement
-                float cloudDriftOffset = cloudClock.getElapsedTime().asMilliseconds() * cloudDriftSpeed;
+                float cloudDriftOffset;
+                if (cloudClockPaused) {
+                    cloudDriftOffset = cloudPausedTime.asMilliseconds() * cloudDriftSpeed;
+                } else {
+                    cloudDriftOffset = (cloudPausedTime + cloudClock.getElapsedTime()).asMilliseconds() * cloudDriftSpeed;
+                }
                 sf::Rect<int> cloudTextureRect(
                     sf::Vector2i(
                         static_cast<int>(view.getCenter().x * cloudParallaxFactor + cloudDriftOffset),
@@ -532,6 +543,16 @@ int main() {
             timeFreeze = false;
             wasInTimeFreeze = false;
             frozenBodyData.clear();
+            
+            // Reset Freeze overlay state
+            isTimeFreezeTransitioning = false;
+            isTimeFreezeOverlayFadingIn = false;
+            isTimeFreezeOverlayFadingOut = false;
+            timeFreezeOverlayAlpha = 0.0f;
+            timeFreezeOverlay.setFillColor(sf::Color(100, 150, 255, 0)); // Reset to transparent
+
+
+
 
             // Reset the Box2D world for the next level
             b2DestroyWorld(worldId);
