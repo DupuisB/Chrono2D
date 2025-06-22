@@ -63,3 +63,5 @@ inline b2BodyId createBalance(
     }
     return b2_nullBodyId;
 }
+
+#endif

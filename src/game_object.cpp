@@ -434,8 +434,6 @@ void GameObject::draw(sf::RenderWindow& window) const {
     } else if (hasVisual && !B2_IS_NULL(bodyId)) { // Fallback or for non-player objects without a sprite
 
         window.draw(sfShape);
-    } else {
-        // if (isFlag_prop_) std::cout << "Flag Not Drawn: No valid visual component." << std::endl;
     }
 }
 
@@ -455,6 +453,15 @@ void GameObject::ensureCorrectSpriteTextureLink() {
             // First, ensure genericTexture_ itself is valid (it should be if it was properly copied)
             if (genericTexture_.getSize().x > 0 && genericTexture_.getSize().y > 0) {
                 sprite->setTexture(genericTexture_, true); // true to reset texture rect
+                
+                // Scale sprite to match GameObject size
+                sf::Vector2u textureSize = genericTexture_.getSize();
+                float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
+                float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
+                sprite->setScale(sf::Vector2f(spriteFlipped ? -scaleX : scaleX, scaleY));
+                
+                // Update origin based on new scale
+                sprite->setOrigin({static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f});
             } else {
                 sprite.reset(); // Cannot use the sprite if its intended texture is bad.
             }
@@ -465,6 +472,15 @@ void GameObject::ensureCorrectSpriteTextureLink() {
                  // Ensure the texture in animFrames is valid before setting
                 if (animFrames[currentFrame].getSize().x > 0 && animFrames[currentFrame].getSize().y > 0) {
                     sprite->setTexture(animFrames[currentFrame], true);
+                    
+                    // Scale player sprite to match GameObject size
+                    sf::Vector2u textureSize = animFrames[currentFrame].getSize();
+                    float scaleX = metersToPixels(width_m_) / static_cast<float>(textureSize.x);
+                    float scaleY = metersToPixels(height_m_) / static_cast<float>(textureSize.y);
+                    sprite->setScale(sf::Vector2f(spriteFlipped ? -scaleX : scaleX, scaleY));
+                    
+                    // Update origin based on new scale
+                    sprite->setOrigin(sf::Vector2f(static_cast<float>(textureSize.x) / 2.f, static_cast<float>(textureSize.y) / 2.f));
                 } else {
                     std::cerr << "Invalid texture for current frame in animation: " << currentAnimationName << std::endl;
                     sprite.reset();

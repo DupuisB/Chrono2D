@@ -133,6 +133,7 @@ inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, 
         boxObj.setSize(boxSizeM, boxSizeM);
         boxObj.setDynamic(true);
         boxObj.setColor(sf::Color::Red);
+        boxObj.setSpriteTexturePath("../assets/objects/box.png"); // Add box texture
         boxObj.setLinearDamping(0.1f);  
         boxObj.setDensity(0.5f);
         boxObj.setFriction(0.7f);   
@@ -143,6 +144,8 @@ inline void updateMap1(b2WorldId worldId, std::vector<GameObject>& gameObjects, 
 
         if (boxObj.finalize(worldId)) {
             gameObjects.push_back(boxObj);
+            GameObject& actualBoxInVector = gameObjects.back(); // Get a reference to the box in the vector
+            actualBoxInVector.ensureCorrectSpriteTextureLink(); // Ensure proper texture linking
         } else {
             std::cerr << "Failed to create falling box in map1." << std::endl;
         }
