@@ -144,21 +144,8 @@ int main() {
     // --- Main Game Loop ---
 
     for( int level=1; level <= 3; ++level ) {
-            // Start fade in transition for new level
-        if (level > 1) {
-            // Clean up previous level
-            for (auto& obj : gameObjects) {
-                if (!B2_IS_NULL(obj.bodyId)) {
-                    b2DestroyBody(obj.bodyId);
-                }
-            }
-            gameObjects.clear();
-            playerBodyId = b2_nullBodyId;
-            playerIndex = -1;
-            timeFreeze = false; // Reset time freeze state
-            wasInTimeFreeze = false; // Reset previous time freeze state
-            frozenBodyData.clear(); // Clear frozen body data
-        }
+        // The cleanup logic that was here has been moved to the end of the inner while loop
+        // to consolidate all inter-level cleanup.
 
         if (level == 1) {
             playerIndex = loadMap0(worldId, gameObjects, playerBodyId);
@@ -169,7 +156,7 @@ int main() {
         }
         
         
-        if (level > 1) {
+        if (level > 1 || transitionAlpha > 0.0f) {
             isTransitioning = true;
             isFadingOut = false;  // Make sure we're not fading out
             isFadingIn = true;    // Set to fade in
@@ -197,6 +184,7 @@ int main() {
             sf::Clock cloudClock; // Add clock for cloud movement
             int32_t subSteps = 8;   // Number of physics sub-steps per frame
             bool levelCompleted = false; // Flag to ensure "Level completed!" message prints only once   
+            bool levelReset = false; // Flag to reset the current level
             while (window.isOpen()) {
                 float elapsed_time = clock.restart().asSeconds();
                 float dt = UPDATE_DELTA;
@@ -220,7 +208,10 @@ int main() {
                         if (transitionAlpha >= 255.0f) {
                             transitionAlpha = 255.0f;
                             isFadingOut = false;
-                            // Level completed, break to next level
+                            if (levelReset) {
+                                level--; // Decrement to repeat the current level
+                            }
+                            // Level completed or reset, break to next level
                             break;
                         }
                     } else if (isFadingIn) {
@@ -271,6 +262,11 @@ int main() {
                 }
                 prevFKeyState = currFKeyState;
 
+                // Detect R key press for level reset
+                if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::R)) {
+                    levelReset = true;
+                }
+
                 // --- Time Freeze Logic ---
                 
                 if (wantsToTimeFreeze) {
@@ -309,6 +305,12 @@ int main() {
                 if (playerIndex != -1 && !B2_IS_NULL(playerBodyId)) {
                     movePlayer(worldId, playerBodyId, gameObjects[playerIndex], gameObjects, jumpKeyHeld,
                             wantsToMoveLeft, wantsToMoveRight, dt);
+                    
+                    // Check if player has fallen off the map
+                    b2Vec2 playerPos = b2Body_GetPosition(playerBodyId);
+                    if (playerPos.y < -20.0f) { // Death plane at y = -20 meters
+                        levelReset = true;
+                    }
                 }
 
                 // Add these vectors to store original body types
@@ -514,8 +516,8 @@ int main() {
 
                 window.display();
 
-                // --- Check for Level Completion ---
-                if (levelCompleted) {
+                // --- Check for Level Completion or Reset ---
+                if (levelCompleted || levelReset) {
                     isTransitioning = true;
                     isFadingOut = true;
                 }
@@ -525,6 +527,12 @@ int main() {
             playerBodyId = b2_nullBodyId;
             playerIndex = -1;
             levelCompleted = false; // Reset for the next level
+            
+            // Reset time freeze state
+            timeFreeze = false;
+            wasInTimeFreeze = false;
+            frozenBodyData.clear();
+
             // Reset the Box2D world for the next level
             b2DestroyWorld(worldId);
             worldId = b2CreateWorld(&worldDef);
