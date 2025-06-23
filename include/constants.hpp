@@ -11,8 +11,8 @@
 #define SELECTED_MAP 1 // Set this to the desired map number
 
 // --- Window ---
-const unsigned int WINDOW_WIDTH  = 1600;
-const unsigned int WINDOW_HEIGHT = 1200;
+const unsigned int WINDOW_WIDTH  = 1280;
+const unsigned int WINDOW_HEIGHT = 720;
 const float PIXELS_PER_METER = 32.0f;
 
 // --- Game Loop ---

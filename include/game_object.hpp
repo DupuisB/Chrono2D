@@ -20,6 +20,7 @@ public:
     float y_m_ {0.0f};
     float width_m_ {1.0f};
     float height_m_ {1.0f};
+    float rotation_deg_ {0.0f}; // Rotation in degrees, default is 0
 
     // Physics properties
     bool isDynamic_val_ {false};
@@ -104,7 +105,9 @@ public:
     void setIsSensorProperty(bool isSensorProp); // Sets the property to make the shape a sensor
     void setEnableSensorEventsProperty(bool enableSensorEventsProp); // Sets property to enable sensor events
     void setPendingImpulsion(b2Vec2 impulsion); // Sets the pending impulsion
-
+    void setRotation(float degrees) {
+        rotation_deg_ = degrees;
+    }
 
     // --- Finalization ---
     /**
