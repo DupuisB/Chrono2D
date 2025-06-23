@@ -236,6 +236,7 @@ inline int loadMap4(b2WorldId worldId,
         dynamicSquareObj.setSize(pixelsToMeters(50.0f), pixelsToMeters(50.0f));
         dynamicSquareObj.setDynamic(true);
         dynamicSquareObj.setColor(sf::Color::Blue);
+        dynamicSquareObj.setSpriteTexturePath("../assets/objects/box.png");
         dynamicSquareObj.setLinearDamping(1.0f);
         dynamicSquareObj.setDensity(50.0f);
         dynamicSquareObj.setFriction(0.0f);
