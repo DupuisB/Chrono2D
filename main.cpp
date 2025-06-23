@@ -23,8 +23,6 @@
 #include <SFML/Audio.hpp>
 #include <cstdint>
 
-
-
 // Helper function to find GameObject by shapeId
 GameObject* findGameObjectByShapeId(b2ShapeId shapeId, std::vector<GameObject>& gameObjects) {
     if (B2_IS_NULL(shapeId)) return nullptr;
@@ -48,6 +46,25 @@ int main() {
 
     // Camera view for scrolling
     sf::View view = window.getDefaultView();
+
+    // --- Load Font for UI Text ---
+    sf::Font font;
+    if (!font.openFromFile("../assets/fonts/ARIAL.TTF")) {
+        // Try alternative font paths if the first fails
+        if (!font.openFromFile("/System/Library/Fonts/Arial.ttf") && 
+            !font.openFromFile("/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf") &&
+            !font.openFromFile("C:/Windows/Fonts/arial.ttf")) {
+            std::cerr << "Warning: Could not load font. Text will not display properly." << std::endl;
+        }
+    }
+
+    // --- Create Instruction Text ---
+    sf::Text instructionText(font, "Press F to freeze time, R to restart", 24);
+    instructionText.setFillColor(sf::Color::White);
+    instructionText.setStyle(sf::Text::Bold);
+    // Position at bottom center of screen
+    sf::FloatRect textBounds = instructionText.getLocalBounds();
+    instructionText.setPosition(sf::Vector2f(WINDOW_WIDTH / 2.0f - textBounds.size.x / 2.0f, WINDOW_HEIGHT - 100.0f));
 
     // Initialize Box2D world
     b2Vec2 gravity = {0.0f, -10.0f};
@@ -523,6 +540,11 @@ int main() {
                 
                 if (timeFreezeOverlayAlpha > 0.0f) {
                     window.draw(timeFreezeOverlay);
+                }
+
+                // --- Draw Instruction Text for Level 1 ---
+                if (level == 1) {
+                    window.draw(instructionText);
                 }
 
                 window.setView(view); 
