@@ -161,7 +161,7 @@ int main() {
 
     
     // --- Main Game Loop ---
-    for( int level=2; level <= 4; ++level ) {
+    for( int level=1; level <= 4; ++level ) {
         // The cleanup logic that was here has been moved to the end of the inner while loop
         // to consolidate all inter-level cleanup.
 
