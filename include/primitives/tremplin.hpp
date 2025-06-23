@@ -44,7 +44,7 @@ inline void createTremplin(
     float tremplinHeightM = pixelsToMeters(50.0f);
 
     tremplinObj.setPosition(x_m, y_m);
-    tremplinObj.setSize(tremplinWidthM, tremplinHeightM);
+    tremplinObj.setSize(tremplinWidthM+pixelsToMeters(14), tremplinHeightM-pixelsToMeters(6));
     tremplinObj.setDynamic(is_dynamic);
     tremplinObj.setColor(sf::Color::Transparent); // Fallback color if sprite fails
     
@@ -63,7 +63,7 @@ inline void createTremplin(
 
 
     tremplinSensor.setPosition(x_m , y_m);
-    tremplinSensor.setSize(tremplinWidthM - pixelsToMeters(4), tremplinHeightM + pixelsToMeters(5));
+    tremplinSensor.setSize(tremplinWidthM, tremplinHeightM);
     tremplinSensor.setDynamic(is_dynamic);
     tremplinSensor.setCanJumpOnProperty(false);
 
