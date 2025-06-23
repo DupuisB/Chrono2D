@@ -82,7 +82,7 @@ public:
         }
     }
 
-    SATResult polygonToPolygon(const std::vector<Vec2f>& polygonA, const )
+    SATResult polygonToPolygon(const std::vector<Vec2f>& polygonA, const );
 
     SATResult satPointPolygon(const Vec2f& point, const std::vector<Vec2f>& polygon, const Vec2f centerA, const Vec2f centerB) {
         SATResult result;

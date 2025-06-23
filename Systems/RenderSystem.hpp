@@ -58,6 +58,7 @@ public:
         for (size_t i = 0; i < positions.size(); i++) {
             lines[i].position = sf::Vector2f(positions[i].x, positions[i].y);
             lines[i].color = color;
+            lines[i].setOutlineWidth(5.0f);
         }
         lines[positions.size()].position = sf::Vector2f(positions[0].x, positions[0].y);
         lines[positions.size()].color = color;
