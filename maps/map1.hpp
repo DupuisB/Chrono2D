@@ -101,7 +101,7 @@ inline int loadMap1(b2WorldId worldId,
     }
 
     // Flag
-    float flagX_m = pixelsToMeters(1400.0f);
+    float flagX_m = pixelsToMeters(1700.0f);
     float flagY_m = pixelsToMeters(0.0f);
     float flagHeight = pixelsToMeters(120.0f);
     createFlag(worldId, gameObjects, flagX_m, flagY_m + flagHeight / 2.0f);
