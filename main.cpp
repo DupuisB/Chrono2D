@@ -41,7 +41,7 @@ GameObject* findGameObjectByShapeId(b2ShapeId shapeId, std::vector<GameObject>& 
  * @return 0 if the game exits successfully, -1 on critical initialization failure.
  */
 int main() {
-    sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "SFML Box2D Platformer");
+    sf::RenderWindow window(sf::VideoMode({WINDOW_WIDTH, WINDOW_HEIGHT}), "Chrono2D");
     window.setFramerateLimit(60);
 
     // Camera view for scrolling
