@@ -144,11 +144,22 @@ int main() {
 
     
     // --- Main Game Loop ---
-    for( int level=0; level <= 0; ++level ) {
+    for( int level=1; level <= 4; ++level ) {
         // The cleanup logic that was here has been moved to the end of the inner while loop
         // to consolidate all inter-level cleanup.
 
-        playerIndex = loadMap4(worldId, gameObjects, playerBodyId);
+
+        if (level == 0) {
+            playerIndex = loadMap0(worldId, gameObjects, playerBodyId);
+        } else if (level == 1) {
+            playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
+        } else if (level == 2) {
+            playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
+        } else if (level == 3) {
+            playerIndex = loadMap3(worldId, gameObjects, playerBodyId);
+        } else if (level == 4) {
+            playerIndex = loadMap4(worldId, gameObjects, playerBodyId);
+        }
         
         
         if (level > 1 || transitionAlpha > 0.0f) {
