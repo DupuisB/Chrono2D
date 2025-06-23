@@ -145,11 +145,25 @@ int main() {
     
     // --- Main Game Loop ---
 
+<<<<<<< HEAD
     for( int level=0; level <= 0; ++level ) {
         // The cleanup logic that was here has been moved to the end of the inner while loop
         // to consolidate all inter-level cleanup.
 
         playerIndex = loadMap4(worldId, gameObjects, playerBodyId);
+=======
+    for( int level=2; level <= 3; ++level ) {
+        // The cleanup logic that was here has been moved to the end of the inner while loop
+        // to consolidate all inter-level cleanup.
+
+        if (level == 1) {
+            playerIndex = loadMap1(worldId, gameObjects, playerBodyId);
+        } else if (level == 2) {
+            playerIndex = loadMap2(worldId, gameObjects, playerBodyId);
+        } else if (level == 3) {
+            playerIndex = loadMap3(worldId, gameObjects, playerBodyId);
+        }
+>>>>>>> 5a4eb112ac13f775253a871fa2b05d657182777e
         
         
         if (level > 1 || transitionAlpha > 0.0f) {
@@ -418,14 +432,14 @@ int main() {
                         }
                         if (objA && objB) {
                             if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
-                                b2Vec2 impulse = {0, 10.0f};
+                                float mass = b2Body_GetMass(objB->bodyId);
+                                if (mass>3) {mass=mass*mass*2/3.f;};
+                                b2Vec2 impulse = {0.f, mass};
                                 objB->setPendingImpulsion(impulse);
-                                std::cout << "impulseB, dynamic:"<< objB->isDynamic_val_ << " et densité :"<< objB->density_val_ << " et vitesse: "<<std::endl;
                             }
                             else if (objB->isTremplin_prop_ && objB->isSensor_prop_ && objA->isDynamic_val_) {
                                 b2Vec2 impulse = {0, 10.0f};
                                 objA->setPendingImpulsion(impulse);
-                                std::cout << "impulseA" <<std::endl;
                             }
                         }
                     }
@@ -439,6 +453,7 @@ int main() {
                 }
 
                 // --- Update SFML Graphics ---
+
                 for (auto& obj : gameObjects) {
                     obj.updateShape();
                 }

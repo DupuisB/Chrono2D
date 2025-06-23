@@ -52,7 +52,7 @@ inline int loadMap2(b2WorldId worldId,
     // Wall
     {   GameObject wallObj;
         float wallWidthM = pixelsToMeters(600);
-        float wallHeightM = pixelsToMeters(600);
+        float wallHeightM = pixelsToMeters(350);
         wallObj.setPosition(wallWidthM / 2.0f + pixelsToMeters(1000), wallHeightM / 2.0f + pixelsToMeters(50));
         wallObj.setSize(wallWidthM, wallHeightM);
         wallObj.setDynamic(false); // Sets density to 0
@@ -109,6 +109,7 @@ inline int loadMap2(b2WorldId worldId,
         boxObj.setSize(boxSizeM, boxSizeM);
         boxObj.setDynamic(true);
         boxObj.setSpriteTexturePath("../assets/objects/box.png");
+        boxObj.setEnableSensorEventsProperty(true);
         // boxObj.setFixedRotation(false); // Default
         boxObj.setLinearDamping(0.2f);
         boxObj.setDensity(1.0f); 
@@ -174,7 +175,7 @@ inline int loadMap2(b2WorldId worldId,
     // --- Create Flag ---
     // Place the flag somewhere in the map, e.g., near the right side
     float flagX_m = pixelsToMeters(WINDOW_WIDTH - 150.0f);
-    float groundHeightM_val_for_flag = pixelsToMeters(650); // Assuming ground height is 50px
+    float groundHeightM_val_for_flag = pixelsToMeters(400); // Assuming ground height is 50px
     float flagHeight_m_val = pixelsToMeters(120.0f); // Flag's own height
     float flagY_m = groundHeightM_val_for_flag + flagHeight_m_val / 2.0f; // Position flag on the ground
     

@@ -48,7 +48,7 @@ inline void createTremplin(
     tremplinObj.setDynamic(is_dynamic);
     tremplinObj.setColor(sf::Color::Transparent); // Fallback color if sprite fails
     
-    tremplinObj.setCanJumpOnProperty(true);
+    tremplinObj.setCanJumpOnProperty(false);
     tremplinObj.setCollidesWithPlayerProperty(true);
     //tremplinObj.setIsTremplinProperty(true);
     //tremplinObj.setIsSensorProperty(true); // Make the tremplin a sensor
@@ -63,8 +63,9 @@ inline void createTremplin(
 
 
     tremplinSensor.setPosition(x_m , y_m);
-    tremplinSensor.setSize(tremplinWidthM, tremplinHeightM + pixelsToMeters(1));
+    tremplinSensor.setSize(tremplinWidthM - pixelsToMeters(4), tremplinHeightM + pixelsToMeters(5));
     tremplinSensor.setDynamic(is_dynamic);
+    tremplinSensor.setCanJumpOnProperty(false);
 
     tremplinSensor.setSpriteTexturePath("../assets/sprite/objects/tremplin-1.png"); // Path to tremplin image
     tremplinSensor.setIsTremplinProperty(true);
