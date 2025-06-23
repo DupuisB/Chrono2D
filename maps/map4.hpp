@@ -43,7 +43,7 @@ inline int loadMap4(b2WorldId worldId,
         groundObj.setDynamic(false);
         groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
+        groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
         groundObj.setCanJumpOnProperty(true);
         groundObj.setCollidesWithPlayerProperty(true);
@@ -62,7 +62,7 @@ inline int loadMap4(b2WorldId worldId,
         leftWallObj.setDynamic(false);
         leftWallObj.setColor(sf::Color(139, 69, 19));
         leftWallObj.setFriction(0.7f);
-        leftWallObj.setRestitution(0.1f);
+        leftWallObj.setRestitution(0.0f);
         leftWallObj.setIsPlayerProperty(false);
         leftWallObj.setCanJumpOnProperty(true);
         leftWallObj.setCollidesWithPlayerProperty(true);
@@ -83,7 +83,7 @@ inline int loadMap4(b2WorldId worldId,
         groundObj.setDynamic(false);
         groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
+        groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
         groundObj.setCanJumpOnProperty(true);
         groundObj.setCollidesWithPlayerProperty(true);
@@ -105,7 +105,7 @@ inline int loadMap4(b2WorldId worldId,
         dynamicRectObj.setLinearDamping(0.5f);
         dynamicRectObj.setDensity(1.0f);
         dynamicRectObj.setFriction(0.7f);
-        dynamicRectObj.setRestitution(0.1f);
+        dynamicRectObj.setRestitution(0.0f);
         dynamicRectObj.setIsPlayerProperty(false);
         dynamicRectObj.setCanJumpOnProperty(true);
         dynamicRectObj.setCollidesWithPlayerProperty(true);
@@ -122,7 +122,7 @@ inline int loadMap4(b2WorldId worldId,
         blockerLeftObj.setDynamic(false);
         blockerLeftObj.setColor(sf::Color(34, 139, 34));
         blockerLeftObj.setFriction(0.7f);
-        blockerLeftObj.setRestitution(0.1f);
+        blockerLeftObj.setRestitution(0.0f);
         blockerLeftObj.setIsPlayerProperty(false);
         blockerLeftObj.setCanJumpOnProperty(true);
         blockerLeftObj.setCollidesWithPlayerProperty(true);
@@ -138,7 +138,7 @@ inline int loadMap4(b2WorldId worldId,
         blockerRightObj.setDynamic(false);
         blockerRightObj.setColor(sf::Color(34, 139, 34));
         blockerRightObj.setFriction(0.7f);
-        blockerRightObj.setRestitution(0.1f);
+        blockerRightObj.setRestitution(0.0f);
         blockerRightObj.setIsPlayerProperty(false);
         blockerRightObj.setCanJumpOnProperty(true);
         blockerRightObj.setCollidesWithPlayerProperty(true);
@@ -154,7 +154,7 @@ inline int loadMap4(b2WorldId worldId,
         groundObj.setDynamic(false);
         groundObj.setColor(sf::Color(34, 139, 34));
         groundObj.setFriction(0.7f);
-        groundObj.setRestitution(0.1f);
+        groundObj.setRestitution(0.0f);
         groundObj.setIsPlayerProperty(false);
         groundObj.setCanJumpOnProperty(true);
         groundObj.setCollidesWithPlayerProperty(true);
@@ -172,7 +172,7 @@ inline int loadMap4(b2WorldId worldId,
         stair1Obj.setDynamic(false);
         stair1Obj.setColor(sf::Color(139, 69, 19));
         stair1Obj.setFriction(0.7f);
-        stair1Obj.setRestitution(0.1f);
+        stair1Obj.setRestitution(0.0f);
         stair1Obj.setIsPlayerProperty(false);
         stair1Obj.setCanJumpOnProperty(true);
         stair1Obj.setCollidesWithPlayerProperty(true);
@@ -188,7 +188,7 @@ inline int loadMap4(b2WorldId worldId,
         stair2Obj.setDynamic(false);
         stair2Obj.setColor(sf::Color(139, 69, 19));
         stair2Obj.setFriction(0.7f);
-        stair2Obj.setRestitution(0.1f);
+        stair2Obj.setRestitution(0.0f);
         stair2Obj.setIsPlayerProperty(false);
         stair2Obj.setCanJumpOnProperty(true);
         stair2Obj.setCollidesWithPlayerProperty(true);
@@ -204,7 +204,7 @@ inline int loadMap4(b2WorldId worldId,
         stair3Obj.setDynamic(false);
         stair3Obj.setColor(sf::Color(139, 69, 19));
         stair3Obj.setFriction(0.7f);
-        stair3Obj.setRestitution(0.1f);
+        stair3Obj.setRestitution(0.0f);
         stair3Obj.setIsPlayerProperty(false);
         stair3Obj.setCanJumpOnProperty(true);
         stair3Obj.setCollidesWithPlayerProperty(true);
@@ -221,7 +221,7 @@ inline int loadMap4(b2WorldId worldId,
         finalPlatformObj.setDynamic(false);
         finalPlatformObj.setColor(sf::Color(34, 139, 34));
         finalPlatformObj.setFriction(0.7f);
-        finalPlatformObj.setRestitution(0.1f);
+        finalPlatformObj.setRestitution(0.0f);
         finalPlatformObj.setIsPlayerProperty(false);
         finalPlatformObj.setCanJumpOnProperty(true);
         finalPlatformObj.setCollidesWithPlayerProperty(true);
@@ -239,7 +239,7 @@ inline int loadMap4(b2WorldId worldId,
         dynamicSquareObj.setLinearDamping(1.0f);
         dynamicSquareObj.setDensity(50.0f);
         dynamicSquareObj.setFriction(0.0f);
-        dynamicSquareObj.setRestitution(0.1f);
+        dynamicSquareObj.setRestitution(0.0f);
         dynamicSquareObj.setIsPlayerProperty(false);
         dynamicSquareObj.setCanJumpOnProperty(true);
         dynamicSquareObj.setCollidesWithPlayerProperty(true);
@@ -301,7 +301,7 @@ inline int loadMap4(b2WorldId worldId,
         finalGroundObj.setDynamic(false);
         finalGroundObj.setColor(sf::Color(34, 139, 34));
         finalGroundObj.setFriction(0.7f);
-        finalGroundObj.setRestitution(0.1f);
+        finalGroundObj.setRestitution(0.0f);
         finalGroundObj.setIsPlayerProperty(false);
         finalGroundObj.setCanJumpOnProperty(true);
         finalGroundObj.setCollidesWithPlayerProperty(true);
@@ -372,7 +372,7 @@ inline float createHangingPlatformWithRopes(b2WorldId worldId,
         platformObj.setLinearDamping(0.5f);
         platformObj.setDensity(1.0f);
         platformObj.setFriction(0.7f);
-        platformObj.setRestitution(0.1f);
+        platformObj.setRestitution(0.0f);
         platformObj.setIsPlayerProperty(false);
         platformObj.setCanJumpOnProperty(true);
         platformObj.setCollidesWithPlayerProperty(true);
