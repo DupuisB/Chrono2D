@@ -37,6 +37,7 @@ inline void createTremplin(
     float x_m, float y_m) {
 
     GameObject tremplinObj;
+    GameObject tremplinObj2;
     GameObject tremplinSensor;
 
     // Tremplin dimensions (140x50 pixels)
@@ -60,6 +61,15 @@ inline void createTremplin(
     
     // Collision properties are handled by setIstremplinProperty and setIsPlayerProperty
 
+    tremplinObj2.setPosition(x_m, y_m);
+    tremplinObj2.setSize(tremplinWidthM, tremplinHeightM);
+    tremplinObj2.setDynamic(is_dynamic);
+    tremplinObj2.setCanJumpOnProperty(true);
+    tremplinObj2.setCollidesWithPlayerProperty(true);
+    tremplinObj2.setColor(sf::Color::Transparent);
+    tremplinObj2.setFriction(0.0f);
+    tremplinObj2.setRestitution(0.45f);
+
 
 
     tremplinSensor.setPosition(x_m , y_m);
@@ -72,8 +82,14 @@ inline void createTremplin(
     tremplinSensor.setIsSensorProperty(true);
     tremplinSensor.setEnableSensorEventsProperty(true);
 
+
+
     if (tremplinObj.finalize(worldId)) {
         gameObjects.push_back(tremplinObj);
+    }
+
+    if (tremplinObj2.finalize(worldId)) {
+        gameObjects.push_back(tremplinObj2);
     }
 
     if (tremplinSensor.finalize(worldId)) {

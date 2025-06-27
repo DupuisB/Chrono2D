@@ -444,11 +444,8 @@ int main() {
                             }
                         }
                         if (objA && objB) {
-                            if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_) {
-                                float mass = b2Body_GetMass(objB->bodyId);
-                                if (mass>2){mass=mass*mass*2/3.f;}
-                                else {mass=2;};
-                                b2Vec2 impulse = {0.f, mass};
+                            if (objA->isTremplin_prop_ && objA->isSensor_prop_ && objB->isDynamic_val_ && !objB->isPlayer_prop_) {
+                                b2Vec2 impulse = {0.f, 1.5f};
                                 objB->setPendingImpulsion(impulse);
                             }
                             else if (objB->isTremplin_prop_ && objB->isSensor_prop_ && objA->isDynamic_val_) {
