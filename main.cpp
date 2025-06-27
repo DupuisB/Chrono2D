@@ -62,9 +62,10 @@ int main() {
     Entity someRect = ecs->createEntity();
     std::vector<Vec2f> someRectPoints = makeRect(Vec2f(200.0f, 400.0f), 100.0f, 50.0f, 45.0f);
     setupRigidBody(someRect, ecs, someRectPoints, 0.0f, sf::Color::Red, true);
-    //Entity dynRect = ecs->createEntity();
-    //std::vector<Vec2f> rectPoints = makePolygon(Vec2f(150.0f, 100.0f), 100.0f, 4, 0.0f);
-    //setupRigidBody(dynRect, ecs, rectPoints, 1.0f, sf::Color::Blue, false);
+    
+    Entity dynRect = ecs->createEntity();
+    std::vector<Vec2f> rectPoints = makePolygon(Vec2f(150.0f, 100.0f), 100.0f, 4, 0.0f);
+    setupRigidBody(dynRect, ecs, rectPoints, 1.0f, sf::Color::Blue, false);
 
     // create dynamic triangle entity
     Entity triangle = ecs->createEntity();
@@ -72,14 +73,13 @@ int main() {
     setupRigidBody(triangle, ecs, trianglePoints, 1.0f, sf::Color::Blue, false);
 
     // create dynamic pentagon entity
-    //Entity pentagon = ecs->createEntity();
-    //std::vector<Vec2f> pentagonPoints = makePolygon(Vec2f(600.0f, 100.0f), 50.0f, 5, 0.0f);
-    //setupRigidBody(pentagon, ecs, pentagonPoints, 1.0f, sf::Color::Blue, false);
-
+    Entity pentagon = ecs->createEntity();
+    std::vector<Vec2f> pentagonPoints = makePolygon(Vec2f(600.0f, 100.0f), 50.0f, 5, 0.0f);
+    setupRigidBody(pentagon, ecs, pentagonPoints, 1.0f, sf::Color::Blue, false);
     // second small cube
-    //Entity smallCube = ecs->createEntity();
-    //std::vector<Vec2f> smallCubePoints = makePolygon(Vec2f(300.0f, 100.0f), 50.0f, 4, 0.0f);
-    //setupRigidBody(smallCube, ecs, smallCubePoints, 1.0f, sf::Color::Blue, false);
+    Entity smallCube = ecs->createEntity();
+    std::vector<Vec2f> smallCubePoints = makePolygon(Vec2f(300.0f, 100.0f), 50.0f, 4, 0.0f);
+    setupRigidBody(smallCube, ecs, smallCubePoints, 1.0f, sf::Color::Blue, false);
 
 
     // Game loop
