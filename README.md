@@ -9,7 +9,6 @@ A full report is available [here](https://github.com/DupuisB/Chrono2D/blob/main/
 [![Language](https://img.shields.io/badge/Language-C++-00599C?style=for-the-badge&logo=cplusplus)](https://isocpp.org/)
 [![SFML](https://img.shields.io/badge/Graphics-SFML-88B447?style=for-the-badge&logo=sfml)](https://www.sfml-dev.org/)
 [![Box2D](https://img.shields.io/badge/Physics-Box2D-3A5D96?style=for-the-badge)](https://box2d.org/)
-[![Status](https://img.shields.io/badge/Status-Completed-brightgreen)](https://shields.io/)
 
 Chrono2D is a 2D platformer built with C++, SFML, and Box2D. Players navigate levels filled with physics-based puzzles (Rigid Body Physics) and challenges, using a unique **time-freeze mechanic** to creatively interact with the environment.
 
